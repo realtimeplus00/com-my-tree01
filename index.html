@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>나무키우기 — 매일 한 번, 다정한 안부</title>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --soil: #6b4c2a;
@@ -186,6 +187,10 @@
   #letter-modal-overlay.open { display: flex; }
   @keyframes letterModalIn {
     from { opacity:0; transform: scale(0.88) translateY(24px); }
+    to   { opacity:1; transform: scale(1) translateY(0); }
+  }
+  @keyframes geoModalIn {
+    from { opacity:0; transform: scale(0.82) translateY(32px); }
     to   { opacity:1; transform: scale(1) translateY(0); }
   }
   .letter-modal-card {
@@ -534,6 +539,21 @@
     border-radius: 8px; transition: background 0.15s;
   }
   .lab-close:hover { background: #eee; }
+  .btn-lab-reset {
+    width: 100%;
+    padding: 0.65rem;
+    background: transparent;
+    color: #b04040;
+    border: 1.5px solid #e0a8a8;
+    border-radius: 12px;
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.88rem; font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+  .btn-lab-reset:hover { background: #fff0f0; border-color: #c07070; }
+  .btn-lab-reset:active { transform: scale(0.97); background: #ffe8e8; }
 
   /* ===== PAGE 2: SETUP ===== */
   #page2 {
@@ -717,13 +737,24 @@
   #tree-stage {
     position: absolute;
     bottom: 30%;
-    left: 60%; transform: translateX(-50%);
+    left: 55%;
+    margin-left: -110px;
     z-index: 5;
     width: 220px;
     display: flex; justify-content: center; align-items: flex-end;
-    transition: left 0.6s ease;
   }
-  #tree-stage svg { overflow: visible; }
+  #tree-stage svg {
+    overflow: visible;
+    transform-origin: bottom center;
+    animation: treeSway 5s ease-in-out infinite;
+  }
+  @keyframes treeSway {
+    0%   { transform: rotate(0deg); }
+    25%  { transform: rotate(1.5deg); }
+    50%  { transform: rotate(0deg); }
+    75%  { transform: rotate(-1.5deg); }
+    100% { transform: rotate(0deg); }
+  }
 
   /* Bottom info card — 심플 */
   .bottom-card {
@@ -744,6 +775,8 @@
     color: #2a4a1e;
     font-weight: 700;
     letter-spacing: -0.01em;
+    line-height: 1.55;
+    white-space: pre-line;
   }
   .weather-badge {
     font-size: 0.75rem;
@@ -752,6 +785,58 @@
     border-radius: 20px;
     padding: 0.22rem 0.72rem;
     white-space: nowrap;
+  }
+
+  /* ── 하늘 비 튜토리얼 힌트 ── */
+  #rain-tutorial-hint {
+    position: absolute;
+    top: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 11;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.7s ease;
+  }
+  #rain-tutorial-hint.visible { opacity: 1; }
+  #rain-tutorial-hint.fade-out { opacity: 0; }
+  .rain-hint-cloud {
+    font-size: 2rem;
+    animation: hintCloudBob 2.2s ease-in-out infinite;
+    filter: drop-shadow(0 2px 6px rgba(100,160,255,0.35));
+  }
+  @keyframes hintCloudBob {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .rain-hint-text {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.95);
+    letter-spacing: 0.04em;
+    text-align: center;
+    line-height: 1.6;
+    text-shadow: 0 1px 8px rgba(0,80,160,0.5), 0 0 20px rgba(0,0,0,0.3);
+    white-space: pre-line;
+    background: rgba(60,120,200,0.22);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 16px;
+    padding: 0.55rem 1.1rem;
+  }
+  .rain-hint-arrow {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.8);
+    animation: hintArrowPulse 1.4s ease-in-out infinite;
+    text-shadow: 0 1px 6px rgba(0,80,200,0.4);
+  }
+  @keyframes hintArrowPulse {
+    0%,100% { opacity: 0.5; transform: translateY(0); }
+    50%      { opacity: 1;   transform: translateY(5px); }
   }
 
   /* ── 나무 위 말풍선 ── */
@@ -1155,6 +1240,260 @@
     word-break: keep-all;
   }
 
+  /* ── 추억 갤러리 ── */
+  #gallery-overlay {
+    position: fixed; inset: 0;
+    background: rgba(20,15,5,0.65);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    padding: 1rem;
+  }
+  #gallery-overlay.open { display: flex; }
+  .gallery-card {
+    background: #fffdf5;
+    border-radius: 24px;
+    width: min(94vw, 420px);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1.2rem 1.2rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.28);
+    border: 1.5px solid #e8d8a0;
+  }
+  .gallery-title {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #3a2a0a;
+    text-align: center;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+  }
+  .gallery-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 0.8rem;
+  }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    padding-bottom: 0.4rem;
+  }
+  .gallery-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+  .gallery-item img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    display: block;
+    transition: transform 0.15s;
+  }
+  .gallery-item:active img { transform: scale(0.95); }
+  .gallery-item-label {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.78rem;
+    color: #7a6a40;
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+  .gallery-item-memo {
+    font-size: 0.7rem;
+    color: #9a8a6a;
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 0.2rem;
+    font-style: italic;
+  }
+  .gallery-empty {
+    text-align: center;
+    color: #a09070;
+    font-size: 0.88rem;
+    line-height: 1.8;
+    padding: 1.5rem 0;
+    grid-column: span 2;
+  }
+  .gallery-btn {
+    display: block;
+    width: 100%;
+    flex-shrink: 0;
+    padding: 0.7rem;
+    background: linear-gradient(135deg, #4a7c59, #3d6630);
+    color: white;
+    border: none; border-radius: 14px;
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.9rem; font-weight: 700;
+    cursor: pointer;
+  }
+  .gallery-open-btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 0.6rem;
+    padding: 0.72rem;
+    background: linear-gradient(135deg, #7ec8e8, #5ab0d8);
+    color: white;
+    border: none; border-radius: 14px;
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.92rem; font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    box-shadow: 0 3px 12px rgba(90,176,216,0.35);
+  }
+  /* ── 사진 상세 모달 ── */
+  #photo-detail-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10,8,3,0.80);
+    z-index: 310;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    padding: 1rem;
+  }
+  #photo-detail-overlay.open { display: flex; }
+  @keyframes photoDetailIn {
+    from { opacity:0; transform: scale(0.88) translateY(20px); }
+    to   { opacity:1; transform: scale(1) translateY(0); }
+  }
+  .photo-detail-card {
+    background: #fffdf5;
+    border-radius: 22px;
+    width: min(92vw, 400px);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.4rem 1.2rem 1.5rem;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.38);
+    border: 1.5px solid #e8d8a0;
+    animation: photoDetailIn 0.35s cubic-bezier(0.34,1.2,0.64,1) forwards;
+  }
+  .photo-detail-label {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #7a6a40;
+    text-align: center;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.06em;
+  }
+  .photo-detail-img {
+    width: 100%;
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+    display: block;
+    margin-bottom: 1.1rem;
+  }
+  .photo-memo-label {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #4a6a40;
+    margin-bottom: 0.4rem;
+  }
+  .photo-memo-input {
+    width: 100%;
+    border: 1.5px solid #c8ddb8;
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 0.85rem;
+    color: #2c3824;
+    background: #f8fdf4;
+    resize: none;
+    height: 80px;
+    outline: none;
+    line-height: 1.6;
+    margin-bottom: 0.7rem;
+  }
+  .photo-memo-input:focus { border-color: #6db07a; }
+  .photo-detail-btns { display: flex; gap: 0.5rem; }
+  .photo-detail-save-btn {
+    flex: 2; padding: 0.65rem;
+    background: #4a7c59; color: white;
+    border: none; border-radius: 12px;
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  }
+  .photo-detail-close-btn {
+    flex: 1; padding: 0.65rem;
+    background: #eef5ea; color: #4a7c59;
+    border: none; border-radius: 12px;
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  }
+
+  .diary-prev-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.1rem 0;
+  }
+  .diary-prev-item span { flex: 1; }
+  .diary-del-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #c0a0a0;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0 0.15rem;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .diary-del-btn:active { color: #e05050; }
+  .diary-all-item { position: relative; }
+  .diary-all-del-btn {
+    position: absolute;
+    top: 0.5rem; right: 0.6rem;
+    background: none;
+    border: none;
+    color: #c0a0a0;
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.1rem 0.2rem;
+    transition: color 0.15s;
+  }
+  .diary-all-del-btn:active { color: #e05050; }
+
+  /* 기쁨/슬픔 한마디 입력 */
+  .diary-emotion-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-bottom: 0.5rem;
+  }
+  .diary-emotion-block { display: flex; flex-direction: column; gap: 0.3rem; }
+  .diary-emotion-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #4a6a40;
+  }
+  .diary-save-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.2rem;
+  }
+  /* 저장된 글자 색 */
+  .diary-text-happy { color: #3a8fc4; }
+  .diary-text-sad   { color: #c46070; }
+
+  /* 전체보기 아이템 감정 구분 */
+  .diary-all-item.happy { border-left-color: #7ec8e8; }
+  .diary-all-item.sad   { border-left-color: #e8a0ae; }
+
   /* 스탬프 */
   .stamp-grid {
     display: flex; flex-wrap: wrap; gap: 6px;
@@ -1203,9 +1542,19 @@
     transition: background 0.5s ease, opacity 0.5s ease;
   }
   .bond-bar.filled {
-    background: linear-gradient(to top, #4a7c59, #6db07a);
     opacity: 1;
   }
+  /* 친밀도 단계별 색상 (1~10번째 막대) */
+  .bond-bar.tier-1 { background: linear-gradient(to top, #b0ccc0, #cde3d8); }   /* 10% 연회색-민트 */
+  .bond-bar.tier-2 { background: linear-gradient(to top, #9abfaf, #b8d9c8); }   /* 20% */
+  .bond-bar.tier-3 { background: linear-gradient(to top, #7aab96, #9dcfb5); }   /* 30% 연초록 */
+  .bond-bar.tier-4 { background: linear-gradient(to top, #5a9e82, #80c49a); }   /* 40% */
+  .bond-bar.tier-5 { background: linear-gradient(to top, #4a8f72, #6db88a); }   /* 50% 중간 초록 */
+  .bond-bar.tier-6 { background: linear-gradient(to top, #3d7d60, #5da878); }   /* 60% */
+  .bond-bar.tier-7 { background: linear-gradient(to top, #2e6b4f, #4a9468); }   /* 70% 진초록 */
+  .bond-bar.tier-8 { background: linear-gradient(to top, #1f5a3e, #3a8058); }   /* 80% */
+  .bond-bar.tier-9 { background: linear-gradient(to top, #144d30, #2e7048); }   /* 90% 더 진하게 */
+  .bond-bar.tier-10 { background: linear-gradient(to top, #0a3d22, #1a5c36); }  /* 100% 가장 짙은 초록 */
   .bond-bar.empty {
     background: #e0ece0;
     opacity: 1;
@@ -1220,15 +1569,20 @@
   }
 
   /* ── 나무의 하루 버튼 ── */
-  .tree-day-btn {
-    width: 100%;
-    display: flex; align-items: center; gap: 0.9rem;
+  .tree-day-btn-card {
     background: linear-gradient(135deg, #f0f8ec, #e4f5d4);
     border: 1.5px solid #c0dba8;
     border-radius: 16px;
-    padding: 0.85rem 1rem;
+    padding: 1rem 1.1rem;
+  }
+  .tree-day-btn {
+    width: 100%;
+    display: flex; align-items: center; gap: 0.9rem;
+    background: none; border: none;
+    padding: 0.2rem 0;
     cursor: pointer;
     transition: all 0.2s;
+    text-align: left;
   }
   .tree-day-btn:active { transform: scale(0.97); }
   .tree-day-btn-icon { font-size: 1.8rem; flex-shrink: 0; }
@@ -1444,16 +1798,21 @@
     position: fixed; bottom: 180px; left: 50%; transform: translateX(-50%);
     background: rgba(42,74,30,0.9);
     color: white;
-    padding: 0.6rem 1.4rem;
-    border-radius: 30px;
+    padding: 0.65rem 1.4rem;
+    border-radius: 20px;
     font-size: 0.85rem;
     z-index: 100;
     opacity: 0;
-    transition: opacity 0.4s;
+    transition: opacity 0.4s, background 0.3s;
     pointer-events: none;
-    white-space: nowrap;
+    white-space: normal;
+    text-align: center;
+    width: min(84vw, 320px);
+    line-height: 1.55;
   }
   .toast.show { opacity: 1; }
+  .toast.toast-happy { background: rgba(80,170,220,0.92); color: white; }
+  .toast.toast-sad   { background: rgba(200,100,110,0.88); color: white; }
 
   /* Seed drop animation */
   @keyframes seedDrop {
@@ -1473,30 +1832,32 @@
 
   /* Stage growth pulse */
   @keyframes growPop {
-    0% { transform: scale(0.6) translateX(-50%); opacity: 0; }
-    70% { transform: scale(1.08) translateX(-46%); }
-    100% { transform: scale(1) translateX(-50%); opacity: 1; }
+    0% { transform: scale(0.6); opacity: 0; }
+    70% { transform: scale(1.08); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes growPopSmall {
+    0% { transform: translateX(-50%) scale(0.2); opacity: 0; }
+    70% { transform: translateX(-50%) scale(0.42); }
+    100% { transform: translateX(-50%) scale(0.38); opacity: 1; }
   }
   .grow-pop { animation: growPop 1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 
   /* ===== TREE LEAF WIND ANIMATIONS ===== */
   /* 나무 줄기/몸통은 고정, 잎/캐노피만 흔들림 */
   @keyframes leafSway-gentle {
-    0%,100% { transform: rotate(0deg) skewX(0deg); }
-    30%      { transform: rotate(1.5deg) skewX(0.8deg); }
-    70%      { transform: rotate(-1.2deg) skewX(-0.5deg); }
+    0%,100% { transform: rotate(0deg); }
+    50%     { transform: rotate(0.8deg); }
   }
   @keyframes leafSway-moderate {
-    0%,100% { transform: rotate(0deg) skewX(0deg); }
-    25%     { transform: rotate(3deg) skewX(1.5deg); }
-    60%     { transform: rotate(-2.5deg) skewX(-1deg); }
-    80%     { transform: rotate(1.5deg) skewX(0.5deg); }
+    0%,100% { transform: rotate(0deg); }
+    25%     { transform: rotate(1.2deg); }
+    75%     { transform: rotate(-1.2deg); }
   }
   @keyframes leafSway-strong {
-    0%,100% { transform: rotate(0deg) skewX(0deg); }
-    20%     { transform: rotate(5deg) skewX(2.5deg); }
-    50%     { transform: rotate(-4deg) skewX(-2deg); }
-    75%     { transform: rotate(3deg) skewX(1.2deg); }
+    0%,100% { transform: rotate(0deg); }
+    25%     { transform: rotate(2deg); }
+    75%     { transform: rotate(-2deg); }
   }
 
   /* 잎 그룹에만 적용 — transform-origin: bottom center (줄기 상단) */
@@ -1507,13 +1868,45 @@
   .sway-gentle   { animation: leafSway-gentle   3.8s ease-in-out infinite; }
   .sway-moderate { animation: leafSway-moderate 2.6s ease-in-out infinite; }
   .sway-strong   { animation: leafSway-strong   1.7s ease-in-out infinite; }
+
+  /* ── 돌봄 완료 팝업 ── */
+  #care-popup-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 9000;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  #care-popup-overlay.show { display: flex; }
+  .care-popup-box {
+    background: rgba(255,255,255,0.97);
+    border-radius: 22px;
+    padding: 2rem 2.2rem;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    border: 1.5px solid #c8ddb8;
+    min-width: 220px; max-width: 300px;
+    animation: carePopIn 0.35s cubic-bezier(0.34,1.3,0.64,1) forwards;
+    pointer-events: auto;
+  }
+  @keyframes carePopIn {
+    from { opacity: 0; transform: scale(0.8) translateY(20px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .care-popup-icon { font-size: 2.6rem; margin-bottom: 0.6rem; }
+  .care-popup-msg {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 1rem; font-weight: 700;
+    color: #2a4a1e; line-height: 1.65;
+    white-space: pre-line;
+  }
 </style>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="나무키우기">
+  <meta name="apple-mobile-web-app-title" content="나무 키우기">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#7c3aed">
+  <meta name="theme-color" content="#059669">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <script>
@@ -1526,7 +1919,7 @@
       e.preventDefault();
       window._pwaE=e;
       var b=document.createElement('div');
-      b.style='position:fixed;bottom:0;left:0;right:0;background:#7c3aed;color:#fff;padding:18px;text-align:center;z-index:9999;font-size:15px;font-weight:bold;cursor:pointer;font-family:sans-serif;';
+      b.style='position:fixed;bottom:0;left:0;right:0;background:#059669;color:#fff;padding:18px;text-align:center;z-index:9999;font-size:15px;font-weight:bold;cursor:pointer;font-family:sans-serif;';
       b.innerHTML='📲 홈화면에 앱 추가하기 · Add to Home Screen';
       b.onclick=async function(){window._pwaE.prompt();var r=await window._pwaE.userChoice;if(r.outcome==='accepted')b.remove();};
       document.body.appendChild(b);
@@ -1664,6 +2057,15 @@
 
     <!-- 날씨 생물 레이어 -->
     <div id="creature-layer" style="position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden;"></div>
+    <!-- 손가락 비 레이어 -->
+    <canvas id="finger-rain-canvas" style="position:absolute;inset:0;z-index:6;pointer-events:none;"></canvas>
+
+    <!-- 비 내리기 튜토리얼 힌트 (2일차 1회) -->
+    <div id="rain-tutorial-hint">
+      <div class="rain-hint-cloud">☁️</div>
+      <div class="rain-hint-text">하늘을 3초 이상 꾹 누르면&#10;비를 내려줄 수 있어요 💧</div>
+      <div class="rain-hint-arrow">↓</div>
+    </div>
 
     <!-- 말걸기 버튼: 하단카드 위 왼쪽 고정 -->
     <button class="talk-btn" id="talk-btn" onclick="doTalk()">
@@ -1776,12 +2178,12 @@
       </div>
 
       <!-- 나무의 하루 -->
-      <div class="modal-section">
-        <button class="tree-day-btn" onclick="openTreeDay()">
+      <div class="tree-day-btn-card" style="margin-bottom:0.9rem;">
+        <button class="tree-day-btn" onclick="event.stopPropagation(); openTreeDay()">
           <span class="tree-day-btn-icon">🌿</span>
-          <div>
+          <div class="tree-day-btn-texts">
             <div class="tree-day-btn-label" id="tree-day-btn-label">나무의 하루</div>
-            <div class="tree-day-btn-sub">오늘 나무가 전하는 이야기</div>
+            <div class="tree-day-btn-sub" id="tree-day-btn-sub">오늘 나무가 전하는 이야기</div>
           </div>
         </button>
       </div>
@@ -1806,8 +2208,22 @@
       <div class="modal-section">
         <div class="modal-diary-wrap">
           <div class="modal-diary-label">📝 오늘의 한마디</div>
-          <textarea id="diary-input" class="diary-input" placeholder="오늘 하루 어떠셨어요? 짧게 남겨봐요..." maxlength="80"></textarea>
-          <button class="diary-save-btn" onclick="saveDiary()">남기기</button>
+          <div class="diary-emotion-wrap">
+            <div class="diary-emotion-block">
+              <div class="diary-emotion-label">😊 기쁘고 좋은 일</div>
+              <textarea id="diary-input-happy" class="diary-input" placeholder="오늘 기쁘거나 좋았던 일을 남겨봐요..." maxlength="80"></textarea>
+              <div class="diary-save-btn-row">
+                <button class="diary-save-btn" onclick="saveDiary('happy')">남기기</button>
+              </div>
+            </div>
+            <div class="diary-emotion-block">
+              <div class="diary-emotion-label">😢 슬프고 힘든 일</div>
+              <textarea id="diary-input-sad" class="diary-input" placeholder="오늘 힘들거나 슬펐던 일을 남겨봐요..." maxlength="80"></textarea>
+              <div class="diary-save-btn-row">
+                <button class="diary-save-btn" onclick="saveDiary('sad')">남기기</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="diary-prev" class="diary-prev" style="display:none;"></div>
         <button id="diary-more-btn" class="diary-more-btn" onclick="openDiaryAll()" style="display:none;">— 더 보기 —</button>
@@ -1839,6 +2255,7 @@
       </div>
 
       <div style="position:relative; margin-top:0.8rem;">
+        <button class="gallery-open-btn" onclick="openGallery()">📸 추억 갤러리</button>
         <button class="modal-close-btn" onclick="closeModal()">닫기</button>
         <!-- 응원하기 작은 박스 — 닫기 버튼 왼쪽 아래 구석 -->
         <button onclick="openDonationModal()" style="
@@ -1853,6 +2270,31 @@
         ">🌿 나무 키우기<br>응원하기</button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ======= 추억 갤러리 모달 ======= -->
+  <div id="gallery-overlay" onclick="closeGallery()">
+    <div class="gallery-card" onclick="event.stopPropagation()">
+      <div class="gallery-title">📸 추억 갤러리</div>
+      <div class="gallery-scroll-area">
+        <div id="gallery-grid-inner" class="gallery-grid"></div>
+      </div>
+      <button class="gallery-btn" onclick="closeGallery()">닫기</button>
+    </div>
+  </div>
+
+  <!-- ======= 사진 상세 모달 ======= -->
+  <div id="photo-detail-overlay" onclick="closePhotoDetail()">
+    <div class="photo-detail-card" onclick="event.stopPropagation()">
+      <div class="photo-detail-label" id="photo-detail-label"></div>
+      <img class="photo-detail-img" id="photo-detail-img" src="" alt="">
+      <div class="photo-memo-label">✏️ 이 날의 한마디</div>
+      <textarea class="photo-memo-input" id="photo-memo-input" placeholder="이 날을 기억하며 한마디 남겨요..." maxlength="100"></textarea>
+      <div class="photo-detail-btns">
+        <button class="photo-detail-save-btn" onclick="savePhotoMemo()">저장</button>
+        <button class="photo-detail-close-btn" onclick="closePhotoDetail()">닫기</button>
+      </div>
     </div>
   </div>
 
@@ -1929,54 +2371,162 @@
 
       <div class="modal-section">
         <div class="modal-diary-label">🙂 내 별칭</div>
-        <input id="settings-nickname-input" type="text" maxlength="10"
-          style="width:100%; padding:0.65rem 0.9rem; margin-top:0.2rem;
-            border:1.5px solid #c8ddb8; border-radius:12px;
-            font-family:'Noto Serif KR',serif; font-size:0.95rem;
-            color:#2c2416; background:#fafff5; outline:none;
-            transition:border-color 0.2s; box-sizing:border-box;"
-          onfocus="this.style.borderColor='#4a7c59'"
-          onblur="this.style.borderColor='#c8ddb8'"
-        />
+        <div style="display:flex; gap:0.5rem; margin-top:0.2rem; align-items:center;">
+          <input id="settings-nickname-input" type="text" maxlength="10"
+            style="flex:1; padding:0.65rem 0.9rem;
+              border:1.5px solid #c8ddb8; border-radius:12px;
+              font-family:'Noto Serif KR',serif; font-size:0.95rem;
+              color:#2c2416; background:#fafff5; outline:none;
+              transition:border-color 0.2s; box-sizing:border-box;"
+            onfocus="this.style.borderColor='#4a7c59'"
+            onblur="this.style.borderColor='#c8ddb8'"
+          />
+          <button onclick="saveNickname()" style="
+            padding:0.65rem 0.85rem; white-space:nowrap;
+            background:linear-gradient(135deg,#4a7c59,#3d6630);
+            border:none; border-radius:12px;
+            font-family:'Nanum Myeongjo',serif;
+            font-size:0.85rem; font-weight:700; color:white;
+            cursor:pointer; box-shadow:0 2px 8px rgba(61,102,48,0.25);
+          ">저장</button>
+        </div>
       </div>
 
       <div class="modal-section">
         <div class="modal-diary-label">🌿 나무 이름</div>
-        <input id="settings-treename-input" type="text" maxlength="12"
-          style="width:100%; padding:0.65rem 0.9rem; margin-top:0.2rem;
-            border:1.5px solid #c8ddb8; border-radius:12px;
-            font-family:'Noto Serif KR',serif; font-size:0.95rem;
-            color:#2c2416; background:#fafff5; outline:none;
-            transition:border-color 0.2s; box-sizing:border-box;"
-          onfocus="this.style.borderColor='#4a7c59'"
-          onblur="this.style.borderColor='#c8ddb8'"
-        />
+        <div style="display:flex; gap:0.5rem; margin-top:0.2rem; align-items:center;">
+          <input id="settings-treename-input" type="text" maxlength="12"
+            style="flex:1; padding:0.65rem 0.9rem;
+              border:1.5px solid #c8ddb8; border-radius:12px;
+              font-family:'Noto Serif KR',serif; font-size:0.95rem;
+              color:#2c2416; background:#fafff5; outline:none;
+              transition:border-color 0.2s; box-sizing:border-box;"
+            onfocus="this.style.borderColor='#4a7c59'"
+            onblur="this.style.borderColor='#c8ddb8'"
+          />
+          <button onclick="saveTreeName()" style="
+            padding:0.65rem 0.85rem; white-space:nowrap;
+            background:linear-gradient(135deg,#4a7c59,#3d6630);
+            border:none; border-radius:12px;
+            font-family:'Nanum Myeongjo',serif;
+            font-size:0.85rem; font-weight:700; color:white;
+            cursor:pointer; box-shadow:0 2px 8px rgba(61,102,48,0.25);
+          ">저장</button>
+        </div>
       </div>
 
-      <div style="display:flex; gap:0.6rem; margin-top:0.4rem;">
+      <div style="display:flex; gap:0.6rem; margin-top:0.8rem;">
         <button onclick="closeSettingsModal()" style="
-          flex:1; padding:0.78rem;
+          flex:1; padding:0.72rem;
           background:#f0ede8; border:none; border-radius:14px;
           font-family:'Nanum Myeongjo',serif;
           font-size:0.95rem; color:#6a5a4a;
           cursor:pointer; transition:all 0.2s;
         ">닫기</button>
-        <button onclick="saveSettings()" style="
+      </div>
+
+      <!-- 데이터 백업/복원 -->
+      <div class="modal-section" style="margin-top:1.1rem;">
+        <div class="modal-diary-label">💾 데이터 백업 · 복원</div>
+        <div style="font-size:0.78rem; color:#8a9a8a; margin:0.3rem 0 0.7rem; line-height:1.7;">
+          📄 <b style="color:#4a7c59;">데이터 백업</b> — 일기·방문기록·나무상태 (가벼워서 카톡으로 전송 가능)<br>
+          🖼 <b style="color:#4a6a9a;">사진 백업</b> — 갤러리 추억사진 (용량이 크므로 파일앱에 보관)<br>
+          ② 새 폰에서 각 파일을 순서대로 불러오기
+        </div>
+        <!-- 백업 버튼 -->
+        <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+          <button onclick="backupData()" style="
+            flex:1; padding:0.65rem 0;
+            background:linear-gradient(135deg,#4a7c59,#3d6630);
+            border:none; border-radius:12px;
+            font-family:'Nanum Myeongjo',serif;
+            font-size:0.82rem; font-weight:700; color:white;
+            cursor:pointer; box-shadow:0 2px 8px rgba(61,102,48,0.25);
+          ">📄 데이터 백업</button>
+          <button onclick="backupPhotos()" style="
+            flex:1; padding:0.65rem 0;
+            background:linear-gradient(135deg,#4a6a9a,#3a5a8a);
+            border:none; border-radius:12px;
+            font-family:'Nanum Myeongjo',serif;
+            font-size:0.82rem; font-weight:700; color:white;
+            cursor:pointer; box-shadow:0 2px 8px rgba(58,90,138,0.25);
+          ">🖼 사진 백업</button>
+        </div>
+        <!-- 복원 버튼 -->
+        <div style="display:flex; gap:0.5rem;">
+          <button onclick="document.getElementById('restore-file-input').click()" style="
+            flex:1; padding:0.65rem 0;
+            background:#f0f7ee; border:1.5px solid #b8d4b0;
+            border-radius:12px;
+            font-family:'Nanum Myeongjo',serif;
+            font-size:0.82rem; font-weight:700; color:#3d6630;
+            cursor:pointer;
+          ">📄 데이터 복원</button>
+          <button onclick="document.getElementById('restore-photos-input').click()" style="
+            flex:1; padding:0.65rem 0;
+            background:#eef0f7; border:1.5px solid #b0b8d4;
+            border-radius:12px;
+            font-family:'Nanum Myeongjo',serif;
+            font-size:0.82rem; font-weight:700; color:#3a5a8a;
+            cursor:pointer;
+          ">🖼 사진 복원</button>
+          <input type="file" id="restore-file-input" accept=".json" style="display:none"
+            onchange="restoreData(this)">
+          <input type="file" id="restore-photos-input" accept=".json" style="display:none"
+            onchange="restorePhotos(this)">
+        </div>
+      </div>
+
+      <!-- 일상으로 돌아가기 -->
+      <button onclick="openQuitConfirm()" style="
+        width:100%; margin-top:1.1rem; padding:0.7rem;
+        background:none; border:1.5px dashed #c8b8a8;
+        border-radius:14px; cursor:pointer;
+        font-family:'Nanum Myeongjo',serif;
+        font-size:0.88rem; color:#a08878;
+        letter-spacing:0.03em;
+        transition:all 0.2s;
+      " onmouseover="this.style.background='#faf5f0'"
+         onmouseout="this.style.background='none'">
+        🚪 일상으로 돌아가기
+      </button>
+    </div>
+  </div>
+
+  <!-- ======= 일상으로 돌아가기 확인 모달 ======= -->
+  <div id="quit-overlay" class="modal-overlay" onclick="closeQuitConfirm()" style="z-index:1100;">
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="padding-bottom:2.5rem; max-width:340px; margin:0 auto;">
+      <div class="modal-handle"></div>
+      <div style="text-align:center; font-size:2rem; margin:0.6rem 0 0.4rem;">🚪</div>
+      <div id="quit-confirm-msg" style="
+        text-align:center; font-family:'Noto Serif KR',serif;
+        font-size:1rem; color:#3a3028; line-height:1.75;
+        margin-bottom:1.6rem;
+      "></div>
+      <div style="display:flex; gap:0.6rem;">
+        <button onclick="closeQuitConfirm()" style="
+          flex:1; padding:0.78rem;
+          background:#f0ede8; border:none; border-radius:14px;
+          font-family:'Nanum Myeongjo',serif;
+          font-size:0.95rem; color:#6a5a4a;
+          cursor:pointer;
+        ">취소</button>
+        <button onclick="confirmQuit()" style="
           flex:2; padding:0.78rem;
           background:linear-gradient(135deg,#4a7c59,#3d6630);
           border:none; border-radius:14px;
           font-family:'Nanum Myeongjo',serif;
           font-size:0.95rem; font-weight:700; color:white;
-          cursor:pointer; transition:all 0.2s;
-          box-shadow:0 4px 14px rgba(61,102,48,0.3);
+          cursor:pointer;
+          box-shadow:0 4px 14px rgba(100,80,60,0.25);
           letter-spacing:0.04em;
-        ">저장하기</button>
+        ">앱 닫을게요 🌿</button>
       </div>
     </div>
   </div>
 
   <!-- ======= 나무의 하루 모달 ======= -->
-  <div id="tree-day-overlay" onclick="closeTreeDay()">
+  <div id="tree-day-overlay" onclick="if(event.target===this)closeTreeDay()">
     <div class="tree-day-card" onclick="event.stopPropagation()">
       <div class="tree-day-emoji" id="tree-day-emoji">🌿</div>
       <div class="tree-day-title" id="tree-day-title">나무의 하루</div>
@@ -2033,6 +2583,16 @@
 
     <button class="btn-lab-go" onclick="runLab()">바로 가기 →</button>
 
+    <div style="margin-top:0.85rem; padding-top:0.85rem; border-top:1px dashed #d4e8c0;">
+      <div class="lab-section-label" style="margin-bottom:0.5rem;">🗑️ 저장 데이터 초기화</div>
+      <p style="font-size:0.72rem; color:#8a7a6a; line-height:1.5; margin-bottom:0.6rem;">
+        방문일수·나무 이름·친밀도 등 모든 기록을 지우고<br>처음부터 다시 시작할 수 있어요.
+      </p>
+      <button class="btn-lab-reset" id="btn-lab-reset" onclick="resetAllData()">
+        처음부터 다시 시작
+      </button>
+    </div>
+
     <div class="lab-section-label" style="margin-top:1.2rem;">📍 현재 위치 및 날씨 출처</div>
     <div id="lab-location-info" style="
       background:#f4f9f0; border:1.5px solid #c8ddb8; border-radius:12px;
@@ -2043,6 +2603,47 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<!-- ===== 위치 권한 요청 모달 ===== -->
+<div id="geo-permission-overlay" style="
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(20,40,12,0.62);
+  backdrop-filter:blur(8px);
+  align-items:center; justify-content:center;
+  padding:1.2rem;
+">
+  <div style="
+    background:#fffdf5;
+    border-radius:28px;
+    width:min(90vw,360px);
+    padding:2.4rem 1.8rem 2rem;
+    box-shadow:0 20px 60px rgba(0,0,0,0.28);
+    border:1.5px solid #d4e8b8;
+    text-align:center;
+    font-family:'Noto Serif KR',serif;
+    animation: geoModalIn 0.45s cubic-bezier(0.34,1.2,0.64,1) forwards;
+  ">
+    <div id="geo-modal-icon" style="font-size:2.8rem; margin-bottom:0.6rem;">🌤️</div>
+    <div id="geo-modal-title" style="
+      font-family:'Nanum Myeongjo',serif;
+      font-size:1.2rem; font-weight:800;
+      color:#2a4a1e; margin-bottom:0.6rem;
+      line-height:1.4;
+    ">오늘 날씨를 찾고 있어요</div>
+    <div id="geo-modal-desc" style="
+      font-size:0.85rem; color:#6a7a5a;
+      line-height:1.9; word-break:keep-all;
+    ">
+      내 위치로 실제 날씨를 불러올게요.<br>
+      잠깐, 위치 권한을 허용해주세요 📍
+    </div>
+    <div id="geo-status-text" style="
+      font-size:0.82rem; color:#9a8a7a;
+      margin-top:1.1rem; min-height:1.2em;
+      line-height:1.6;
+    "></div>
+  </div>
+</div>
+
 <div id="loading-overlay" style="
   display:none; position:fixed; inset:0; z-index:200;
   background:#d4eac0;
@@ -2060,9 +2661,11 @@
 let state = {};
 let selectedTreeType = null;
 let weatherCode = 0; // 0=clear,1=cloudy,2=rain,3=snow
+let _bubbleFadeTimer = null; // 말풍선 페이드아웃 전역 타이머 (충돌 방지)
 let weatherDesc = '맑음';
 let windSpeed = 3;   // m/s 기본 산들바람
 let currentHour = new Date().getHours();
+let currentTemp = null; // 현재 온도 (숫자, null이면 모름)
 let animFrameId = null;
 let grassAnimId = null;
 
@@ -2079,11 +2682,142 @@ function loadState() {
   } catch(e) {}
   return _memStorage ? JSON.parse(JSON.stringify(_memStorage)) : null;
 }
-function showToast(msg, dur=2200) {
+// 말풍선을 표시하고 delay ms 후 페이드아웃하는 통합 함수
+function showBubbleWithFade(msg, delay = 5000) {
+  if (typeof renderSpeechBubble !== 'function' || typeof state === 'undefined') return;
+  if (window._visitingTree) return; // 옛나무 방문 중엔 새나무 말풍선 차단
+  // 기존 페이드 타이머 취소
+  if (_bubbleFadeTimer) { clearTimeout(_bubbleFadeTimer); _bubbleFadeTimer = null; }
+  // 말풍선 즉시 보이기 상태로 초기화
+  const bubble = document.getElementById('speech-bubble');
+  if (bubble) {
+    bubble.style.transition = '';
+    bubble.style.opacity = '1';
+    bubble.style.display = '';
+  }
+  const stage = (typeof getStage === 'function') ? getStage(state.days) : 1;
+  renderSpeechBubble(state.nickname, state.treeName, state.days, state.treeType, stage, msg);
+  // delay 후 페이드아웃
+  _bubbleFadeTimer = setTimeout(() => {
+    const b = document.getElementById('speech-bubble');
+    if (!b) return;
+    b.style.transition = 'opacity 0.6s ease';
+    b.style.opacity = '0';
+    setTimeout(() => {
+      b.style.display = 'none';
+      b.style.opacity = '1';
+      b.style.transition = '';
+      _bubbleFadeTimer = null;
+    }, 620);
+  }, delay);
+}
+
+function showToast(msg, dur=2200, emotion='') {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.classList.remove('toast-happy', 'toast-sad');
+  if (emotion) t.classList.add('toast-' + emotion);
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
+  setTimeout(() => { t.classList.remove('show', 'toast-happy', 'toast-sad'); }, dur);
+}
+
+// ============================================================
+// ============================================================
+// 💾 백업 / 복원 (데이터 · 사진 분리)
+// ============================================================
+function _downloadJson(obj, fileName) {
+  const data = JSON.stringify(obj, null, 2);
+  const b64  = btoa(unescape(encodeURIComponent(data)));
+  const uri  = 'data:application/json;charset=utf-8;base64,' + b64;
+  const a    = document.createElement('a');
+  a.href = uri; a.download = fileName;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function backupData() {
+  try {
+    // state 에서 사진(gallery) 없이 순수 데이터만 백업
+    const now  = new Date();
+    const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    _downloadJson({ _type: 'data', ...state }, `나무백업_데이터_${date}.json`);
+    setTimeout(() => showToast('📄 데이터 백업 완료! 카톡으로 보내두세요 📨', 3500), 400);
+  } catch(e) {
+    showToast('백업 중 오류가 생겼어요: ' + e.message);
+  }
+}
+
+function backupPhotos() {
+  try {
+    const now  = new Date();
+    const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    // localStorage 에서 gallery 관련 키만 추출
+    const photos = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('gallery_snapshot_') || k.startsWith('gallery_captured_') || k.endsWith('_memo'))) {
+        photos[k] = localStorage.getItem(k);
+      }
+    }
+    _downloadJson({ _type: 'photos', photos }, `나무백업_사진_${date}.json`);
+    setTimeout(() => showToast('🖼 사진 백업 완료! 파일 앱에 보관해두세요 📁', 3500), 400);
+  } catch(e) {
+    showToast('사진 백업 중 오류가 생겼어요: ' + e.message);
+  }
+}
+
+function restoreData(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  input.value = '';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || typeof parsed !== 'object' || !parsed.nickname) {
+        showToast('올바른 데이터 백업 파일이 아니에요 🌿');
+        return;
+      }
+      Object.assign(state, parsed);
+      saveState();
+      closeSettingsModal();
+      showToast('복원 완료! 나무가 돌아왔어요 🌳');
+      setTimeout(() => {
+        showLoadingOverlay();
+        initMainGame();
+      }, 600);
+    } catch(err) {
+      showToast('파일을 읽을 수 없어요. JSON 파일인지 확인해주세요 😥');
+    }
+  };
+  reader.onerror = () => showToast('파일 읽기에 실패했어요 😥');
+  reader.readAsText(file);
+}
+
+function restorePhotos(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  input.value = '';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || parsed._type !== 'photos' || typeof parsed.photos !== 'object') {
+        showToast('올바른 사진 백업 파일이 아니에요 🖼');
+        return;
+      }
+      let count = 0;
+      for (const [k, v] of Object.entries(parsed.photos)) {
+        try { localStorage.setItem(k, v); count++; } catch(e) {}
+      }
+      showToast(`🖼 사진 ${count}건 복원 완료!`, 3000);
+    } catch(err) {
+      showToast('파일을 읽을 수 없어요. JSON 파일인지 확인해주세요 😥');
+    }
+  };
+  reader.onerror = () => showToast('파일 읽기에 실패했어요 😥');
+  reader.readAsText(file);
 }
 function showLoadingOverlay() {
   const el = document.getElementById('loading-overlay');
@@ -2093,6 +2827,345 @@ function hideLoadingOverlay() {
   const el = document.getElementById('loading-overlay');
   if (el) el.style.display = 'none';
 }
+
+// ============================================================
+// 🌿 IDLE 말풍선 시스템
+// 유저가 10초 무반응 → 1차 멘트(5초 후 사라짐)
+// 이후 15초 무반응 → 2차 멘트(5초 후 사라짐) → 이후 멈춤
+// ============================================================
+const IDLE_SPEECH = {
+  pine: [
+    // 일반 (기본)
+    n => `${n}님, 지금 무슨 생각하고 있어요?`,
+    n => `${n}님, 오늘 하루는 어떠셨나요?`,
+    n => `${n}님, 요즘 잘 지내고 있죠?`,
+    n => `저도 여기서 조용히 기다리고 있었어요. 🌲`,
+    n => `${n}님, 오늘 기분은 괜찮은가요?`,
+    n => `바람이 살랑살랑 불어요.\n${n}님도 느껴지나요? 🌿`,
+    n => `${n}님, 오늘 뭔가 좋은 일 있었나요?`,
+    n => `가끔 아무 말 없이 있어도 좋아요.\n저도 그냥 같이 있을게요. 🌲`,
+    n => `${n}님, 오늘 밥은 잘 드셨나요?`,
+    n => `${n}님, 요즘 피곤하진 않으신가요?`,
+    // 아침
+    n => `${n}님, 오늘 하루도 잘 보내요. 🌿`,
+    n => `좋은 아침이에요, ${n}님.\n오늘도 같이 시작해봐요. 🌲`,
+    n => `${n}님, 아침 드셨나요?\n하루의 시작이 중요하죠. 🌿`,
+    // 저녁/밤
+    n => `${n}님, 오늘 너무 수고했어요. 🌲`,
+    n => `오늘 하루 고생 많았죠?\n이제 좀 쉬어요, ${n}님. 🌿`,
+    n => `${n}님, 오늘 있었던 일들… 다 잘 마무리됐으면 해요. 🌲`,
+    // 날씨 더위
+    n => `${n}님, 오늘 많이 덥지 않나요? 🌿\n더위 조심하세요.`,
+    n => `더운 날씨에 수고가 많아요, ${n}님.\n시원하게 지내고 있나요?`,
+    // 날씨 추위
+    n => `${n}님, 춥지는 않으신가요?\n따뜻하게 입고 다녀요. 🌲`,
+    n => `날씨가 쌀쌀하네요.\n${n}님, 몸 따뜻하게 하고 있죠?`,
+    // 비
+    n => `비가 오네요.\n${n}님, 우산 챙기셨나요? 💧`,
+    n => `빗소리가 좋긴 한데…\n${n}님 젖지 않게 조심하세요. 🌿`,
+    // 눈
+    n => `눈이 내리고 있어요, ${n}님.\n추위 조심하세요. 🌲`,
+    // 기타 감성
+    n => `${n}님, 오늘 하루 중 제일 좋았던 순간이 뭔가요?`,
+    n => `저는 여기서 늘 ${n}님을 기다려요. 🌿`,
+    n => `${n}님, 최근에 맛있는 거 드셨나요?`,
+    n => `가끔은 그냥 멍하니 있어도 괜찮아요.\n저도 그렇거든요. 🌲`,
+    n => `${n}님 덕분에 오늘도 잘 자랐어요. 감사해요. 🌿`,
+    n => `${n}님, 힘든 일은 없었나요?\n말해줘도 괜찮아요. 🌲`,
+    n => `오늘 하늘 보셨나요?\n저는 하루 종일 보고 있었어요. 🌿`,
+    n => `${n}님, 요즘 잠은 잘 자고 있나요?`,
+    n => `${n}님, 가끔 산책도 해보는 건 어떨까요? 🌿`,
+    n => `저도 ${n}님 생각을 했어요.\n오늘 와줘서 좋아요. 🌲`,
+    n => `${n}님, 오늘 하루를 한 단어로 표현한다면요?`,
+    n => `고요한 시간도 나쁘지 않죠.\n저는 늘 여기 있을게요. 🌿`,
+    n => `${n}님, 건강하게 잘 지내고 있죠?`,
+    n => `바람 한 번 쐬고 오면 기분이 나아질 거예요. 🌲`,
+    n => `${n}님, 요즘 하고 싶은 일이 있나요?`,
+    n => `저와 함께라면 오늘도 괜찮을 거예요. 🌿`,
+    n => `${n}님, 오늘 뭔가 새로운 일이 있었나요?`,
+  ],
+  cherry: [
+    // 일반
+    n => `${n}님, 지금 무슨 생각하고 있어요? 🌸`,
+    n => `${n}님~! 오늘 하루 어떠셨어요? 💕`,
+    n => `${n}님, 요즘 잘 지내고 있죠? 🌸`,
+    n => `저 여기서 ${n}님 기다리고 있었어요! 🌷`,
+    n => `${n}님, 오늘 기분은 어때요? 💕`,
+    n => `살랑살랑 바람이 불어요~\n${n}님도 기분 좋으신가요? 🌸`,
+    n => `${n}님, 오늘 좋은 일 있었어요? 🌷`,
+    n => `그냥 가만히 있어도 좋아요.\n저도 여기서 같이 있을게요 💕`,
+    n => `${n}님, 밥은 맛있게 드셨어요? 🌸`,
+    n => `${n}님, 너무 피곤하지는 않으세요? 💕`,
+    // 아침
+    n => `${n}님, 오늘 하루도 잘 보내요~! 🌸`,
+    n => `좋은 아침이에요, ${n}님! 오늘도 화이팅! 🌷`,
+    n => `${n}님, 아침 드셨어요? 잘 챙겨 드세요! 💕`,
+    // 저녁/밤
+    n => `${n}님, 오늘 너무 수고했어요~ 💕`,
+    n => `오늘 하루 고생 많았죠?\n이제 푹 쉬어요, ${n}님! 🌸`,
+    n => `${n}님, 오늘 있었던 일들 다 잘 됐으면 좋겠어요! 🌷`,
+    // 날씨 더위
+    n => `${n}님, 오늘 너무 많이 덥지 않나요? 🌸\n더위 조심하세요!`,
+    n => `더운 날씨에 고생이 많아요, ${n}님!\n시원한 거 드셨어요? 💕`,
+    // 날씨 추위
+    n => `${n}님, 춥지 않으세요?? 🌷\n따뜻하게 입어요!`,
+    n => `날씨가 너무 쌀쌀해요!\n${n}님, 따뜻하게 있죠? 🌸`,
+    // 비
+    n => `비가 와요!\n${n}님, 우산 가지고 계세요? 💧🌸`,
+    n => `빗소리 들려요~\n${n}님, 젖지 않게 조심해요! 💕`,
+    // 눈
+    n => `눈이 내려요, ${n}님! 예쁘죠?? 🌷\n추위 조심해요!`,
+    // 기타 감성
+    n => `${n}님, 오늘 제일 행복했던 순간은요? 💕`,
+    n => `저는 늘 ${n}님을 기다리고 있어요! 🌸`,
+    n => `${n}님, 최근에 맛있는 거 드셨어요? 🌷`,
+    n => `가끔은 멍하니 있어도 괜찮아요~\n저도 그럴 때 있거든요 💕`,
+    n => `${n}님 덕분에 오늘도 잘 자랐어요! 고마워요 🌸`,
+    n => `${n}님, 힘든 일은 없었어요?\n말해줘요! 들을게요 💕`,
+    n => `오늘 하늘 예쁘지 않았어요?\n저는 하루 종일 봤어요 🌸`,
+    n => `${n}님, 요즘 잠은 잘 자고 있죠? 🌷`,
+    n => `${n}님, 가끔 산책해요! 저도 바람 맞고 싶어요 🌸`,
+    n => `저도 ${n}님 생각했어요!\n오늘 와줘서 정말 좋아요 💕`,
+    n => `${n}님, 오늘 하루를 꽃으로 표현하면 어떤 꽃이에요? 🌷`,
+    n => `고요한 시간도 소중해요~\n저는 늘 여기 있을게요 🌸`,
+    n => `${n}님, 건강하게 잘 지내고 있죠? 💕`,
+    n => `바람 쐬고 오면 기분이 달라질 거예요! 🌸`,
+    n => `${n}님, 요즘 하고 싶은 일이 뭐예요? 🌷`,
+    n => `저와 함께라면 오늘도 예쁜 하루예요 💕`,
+    n => `${n}님, 오늘 새로운 일이 있었나요? 🌸`,
+  ],
+  orange: [
+    // 일반
+    n => `${n}님!! 지금 무슨 생각해요?? 🍊`,
+    n => `${n}님~! 오늘 하루 어땠어요?! 🍊⚡`,
+    n => `${n}님, 요즘 잘 지내고 있죠?! 🍊`,
+    n => `저 여기서 계속 기다렸어요!! 🍊`,
+    n => `${n}님, 오늘 기분이 어때요?! 🍊⚡`,
+    n => `바람이 팡팡 불어요!!\n${n}님도 기분 업 됐죠?! 🍊`,
+    n => `${n}님, 오늘 좋은 일 있었어요?! 에너지 나눠줘요!! 🍊`,
+    n => `잠깐 쉬어가는 것도 좋아요!\n저도 같이 쉴게요!! 🍊⚡`,
+    n => `${n}님, 밥 잘 드셨어요?! 잘 먹어야 힘이 나요!! 🍊`,
+    n => `${n}님, 너무 무리하지 말아요!! 🍊`,
+    // 아침
+    n => `${n}님!! 오늘도 완벽한 하루 만들어요!! 🍊⚡`,
+    n => `좋은 아침이에요, ${n}님!! 오늘도 파이팅!! 🍊`,
+    n => `${n}님, 아침 드셨어요?? 에너지 충전하고 달려봐요!! 🍊⚡`,
+    // 저녁/밤
+    n => `${n}님!! 오늘 진짜 수고 많았어요!! 최고!! 🍊⚡`,
+    n => `오늘 고생 많았죠?!\n이제 푹 쉬어요!! ${n}님 대단해요!! 🍊`,
+    n => `${n}님, 오늘 있었던 일들 다 잘 해냈죠?! 믿어요!! 🍊⚡`,
+    // 날씨 더위
+    n => `${n}님!! 오늘 너무 덥지 않아요?! 🍊\n더위 절대 지면 안 돼요!!`,
+    n => `이 더위에도 여기 와줬어요?!\n${n}님 진짜 대단해요!! 🍊⚡`,
+    // 날씨 추위
+    n => `${n}님!! 춥지 않아요?! 🍊\n따뜻하게 입어야 해요!!`,
+    n => `날씨 너무 추운데!!\n${n}님 따뜻하게 있어요!! 🍊⚡`,
+    // 비
+    n => `비 온다고 기죽으면 안 되죠!!\n${n}님 우산 챙겼어요?! 💧🍊`,
+    n => `빗속에서도 저는 여기 있어요!!\n${n}님도 화이팅!! 🍊⚡`,
+    // 눈
+    n => `눈이다!! ${n}님!!! 같이 신나요?! 🍊⚡\n추위 조심은 하고요!!`,
+    // 기타 감성
+    n => `${n}님, 오늘 가장 신났던 순간이 뭐예요?! 🍊`,
+    n => `저는 ${n}님 오기를 엄청 기다렸어요!! 🍊⚡`,
+    n => `${n}님, 최근에 맛있는 거 먹었어요?! 뭐 먹었는지 말해줘요!! 🍊`,
+    n => `에너지 방전됐을 땐 잠깐 쉬어도 괜찮아요!!\n저도 응원할게요!! 🍊⚡`,
+    n => `${n}님 덕분에 오늘도 쑥쑥 자랐어요!! 진짜 고마워요!! 🍊`,
+    n => `${n}님, 힘든 일 있어요?!\n말해줘요!! 같이 이겨내요!! 🍊⚡`,
+    n => `하늘 봤어요?!\n저는 하루 종일 에너지 충전 중이에요!! 🍊`,
+    n => `${n}님, 요즘 잠은 제대로 자요?! 🍊\n잠이 보약이에요!!`,
+    n => `${n}님!! 산책 어때요?! 같이 에너지 뿜어봐요!! 🍊⚡`,
+    n => `${n}님 생각하면서 기다렸어요!!\n와줘서 진짜 좋아요!! 🍊`,
+    n => `${n}님, 오늘 하루를 파워 단어 하나로 표현하면요?! 🍊⚡`,
+    n => `저는 늘 여기서 응원하고 있어요!!\n파이팅!! 🍊`,
+    n => `${n}님, 건강 관리 잘 하고 있죠?! 🍊⚡`,
+    n => `바람 맞고 오면 에너지 폭발할 거예요!! 🍊`,
+    n => `${n}님, 요즘 도전하고 싶은 게 있어요?! 🍊⚡`,
+    n => `저와 함께라면 오늘도 최고의 하루예요!! 🍊`,
+    n => `${n}님!! 오늘 새로운 일이 있었어요?! 말해줘요!! 🍊⚡`,
+  ]
+};
+
+// idle 타이머 관련 변수
+let _idleTimer1 = null;
+let _idleTimer2 = null;
+let _idlePhase  = 0; // 0=대기, 1=1차완료, 2=종료
+let _lastIdxIdle = { pine: -1, cherry: -1, orange: -1 };
+
+function _getIdleMsg() {
+  const nick = (typeof state !== 'undefined' && state.nickname) || '님';
+  const treeType = (typeof state !== 'undefined' && state.treeType) || 'pine';
+  const h = currentHour;
+  const temp = currentTemp;
+
+  // 우선순위: 시간대/날씨 특화 멘트 30% 확률, 나머지 일반
+  const pool = IDLE_SPEECH[treeType] || IDLE_SPEECH.pine;
+
+  // 시간대/날씨 조건에 맞는 인덱스 범위 (각 나무 배열 구조 기준)
+  // 0~9: 일반, 10~12: 아침, 13~15: 저녁/밤, 16~17: 더위, 18~19: 추위, 20~21: 비, 22: 눈, 23~: 기타
+  let candidates = [];
+
+  // 아침 (5~10시)
+  if (h >= 5 && h < 10) candidates.push(10, 11, 12);
+  // 저녁/밤 (18~24, 0~4)
+  if (h >= 18 || h < 5) candidates.push(13, 14, 15);
+  // 더위 (28도 이상)
+  if (temp !== null && temp >= 28) candidates.push(16, 17);
+  // 추위 (8도 이하)
+  if (temp !== null && temp <= 8) candidates.push(18, 19);
+  // 비
+  if (weatherCode === 2) candidates.push(20, 21);
+  // 눈
+  if (weatherCode === 3) candidates.push(22);
+
+  // 조건 멘트 40% 확률 적용 (조건 있을 때만)
+  let idx;
+  if (candidates.length > 0 && Math.random() < 0.4) {
+    idx = candidates[Math.floor(Math.random() * candidates.length)];
+  } else {
+    // 일반 풀 (0~9 + 23~끝)
+    const generalPool = [
+      ...Array.from({length: 10}, (_, i) => i),
+      ...Array.from({length: pool.length - 23}, (_, i) => i + 23)
+    ].filter(i => i < pool.length);
+    do { idx = generalPool[Math.floor(Math.random() * generalPool.length)]; }
+    while (generalPool.length > 1 && idx === _lastIdxIdle[treeType]);
+  }
+  _lastIdxIdle[treeType] = idx;
+
+  return pool[idx](nick);
+}
+
+function _showIdleBubble() {
+  if (typeof renderSpeechBubble !== 'function' || typeof state === 'undefined') return;
+  if (window._visitingTree) return; // 옛나무 방문 중엔 새나무 멘트 차단
+  const msg = _getIdleMsg();
+  const stage = (typeof getStage === 'function') ? getStage(state.days) : 1;
+  renderSpeechBubble(state.nickname, state.treeName, state.days, state.treeType, stage, msg);
+  // 5초 후 페이드아웃
+  setTimeout(() => {
+    const bubble = document.getElementById('speech-bubble');
+    if (!bubble) return;
+    bubble.style.transition = 'opacity 0.6s ease';
+    bubble.style.opacity = '0';
+    setTimeout(() => {
+      bubble.style.display = 'none';
+      bubble.style.opacity = '1';
+      bubble.style.transition = '';
+    }, 620);
+  }, 5000);
+}
+
+function resetIdleTimer() {
+  clearTimeout(_idleTimer1);
+  clearTimeout(_idleTimer2);
+  _idlePhase = 0;
+
+  // 게임 화면이 아닐 땐 작동 안 함
+  if (typeof state === 'undefined' || !state.nickname) return;
+
+  // 1차: 15초 후
+  _idleTimer1 = setTimeout(() => {
+    if (_idlePhase !== 0) return;
+    _idlePhase = 1;
+    _showIdleBubble();
+
+    // 2차: 1차 뜬 후 15초 후
+    _idleTimer2 = setTimeout(() => {
+      if (_idlePhase !== 1) return;
+      _idlePhase = 2;
+      _showIdleBubble();
+      // 이후 멈춤
+    }, 15000);
+  }, 15000);
+}
+
+function initIdleDetection() {
+  const events = ['touchstart', 'touchmove', 'mousedown', 'mousemove', 'keydown', 'click'];
+  events.forEach(ev => {
+    document.addEventListener(ev, () => {
+      // 말풍선 즉시 숨기지 않고 타이머만 리셋
+      resetIdleTimer();
+    }, { passive: true });
+  });
+  resetIdleTimer();
+}
+
+// ── 위치 권한 모달
+let _geoPermissionCallback = null;
+
+function showGeoPermissionModal(callback) {
+  _geoPermissionCallback = callback;
+  const overlay = document.getElementById('geo-permission-overlay');
+  if (overlay) overlay.style.display = 'flex';
+  setGeoStatus('');
+  // 모달이 뜨자마자 자동으로 위치 권한 요청
+  setTimeout(requestGeoPermission, 400);
+}
+
+function hideGeoPermissionModal() {
+  const overlay = document.getElementById('geo-permission-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function setGeoStatus(msg) {
+  const el = document.getElementById('geo-status-text');
+  if (el) el.textContent = msg;
+}
+
+function setGeoModalState(icon, title, desc, status) {
+  const ic = document.getElementById('geo-modal-icon');
+  const ti = document.getElementById('geo-modal-title');
+  const de = document.getElementById('geo-modal-desc');
+  if (ic) ic.textContent = icon;
+  if (ti) ti.textContent = title;
+  if (de) de.innerHTML = desc;
+  setGeoStatus(status);
+}
+
+function requestGeoPermission() {
+  setGeoModalState('🌲', '위치를 확인하고 있어요', '잠깐만 기다려주세요…', '');
+
+  if (!navigator.geolocation) {
+    // 브라우저 미지원 → 서울 fallback
+    _applyFallbackAndProceed('날씨를 불러오는 중이에요 🌿');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      // 성공
+      window._lastLat = pos.coords.latitude;
+      window._lastLon = pos.coords.longitude;
+      window._locationSource = 'gps';
+      setGeoModalState('✅', '위치를 확인했어요!', '실제 날씨로 나무를 키워볼게요 🌿', '');
+      setTimeout(() => {
+        hideGeoPermissionModal();
+        if (_geoPermissionCallback) _geoPermissionCallback();
+      }, 700);
+    },
+    (err) => {
+      // 거부 또는 실패 → 서울 fallback
+      const msg = err.code === 1
+        ? '위치 권한이 없어서 날씨를 직접 찾아볼게요 🌿'
+        : '위치를 찾지 못했어요.\n날씨를 직접 찾아볼게요 🌿';
+      _applyFallbackAndProceed(msg);
+    },
+    { timeout: 10000, maximumAge: 0, enableHighAccuracy: false }
+  );
+}
+
+function _applyFallbackAndProceed(statusMsg) {
+  window._lastLat = SEOUL_LAT;
+  window._lastLon = SEOUL_LON;
+  window._locationSource = 'fallback';
+  setGeoModalState('🌤️', '날씨를 불러올게요', statusMsg, '');
+  setTimeout(() => {
+    hideGeoPermissionModal();
+    if (_geoPermissionCallback) _geoPermissionCallback();
+  }, 1400);
+}
+
 function showPage(n) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page'+n).classList.add('active');
@@ -2123,8 +3196,10 @@ function showNewTreeBtn() {
         setTimeout(positionBtn, 200);
         return;
       }
-      btn.style.top  = (rect.top + rect.height * 0.15) + 'px';
-      btn.style.left = (rect.right + 8) + 'px';
+      btn.style.top   = (rect.top + rect.height * 0.15) + 'px';
+      // 화면 오른쪽 끝에서 8px 안쪽으로 고정
+      btn.style.left  = '';
+      btn.style.right = '8px';
     };
     setTimeout(positionBtn, 800);
   } else {
@@ -2228,6 +3303,18 @@ function newTreeConfirm() {
   saveState();
   closeNewTreeModal();
 
+  // 새 나무 시작 시 방문 나무 초기화
+  if (_visitingTreeDismissTimer) { clearTimeout(_visitingTreeDismissTimer); _visitingTreeDismissTimer = null; }
+  window._visitingTree = null;
+  document.querySelectorAll('.visiting-tree-ghost').forEach(el => el.remove());
+  document.querySelectorAll('.grown-tree-ghost').forEach(el => el.remove());
+  const _vb = document.getElementById('visiting-bubble');
+  if (_vb) _vb.style.display = 'none';
+
+  // 나무 위치 초기화 (방문/졸업 나무 표시로 인해 55%로 밀려난 경우 복원)
+  const _ts = document.getElementById('tree-stage');
+  if (_ts) _ts.style.left = ''; // inline style 제거 → CSS 기본값(55%) 적용
+
   // 게임 화면 새로고침
   showPage(4);
   showLoadingOverlay();
@@ -2250,7 +3337,8 @@ function openTreeDay() {
   const emoji = { pine:'🌲', cherry:'🌸', orange:'🍊' };
   document.getElementById('tree-day-emoji').textContent = emoji[type] || '🌿';
   document.getElementById('tree-day-title').textContent = tName + '의 하루';
-  document.getElementById('tree-day-btn-label').textContent = tName + '의 하루';
+  document.getElementById('tree-day-btn-label').textContent = nick + '님, 보세요';
+  document.getElementById('tree-day-btn-sub').textContent = '오늘 ' + tName + '가 전하는 이야기';
 
   // 날씨 표현
   const weatherWord = {
@@ -2381,14 +3469,15 @@ function openTreeDay() {
   const msg = pool[seededRand(seed + 42, pool.length)];
   document.getElementById('tree-day-msg').textContent = msg;
 
-  // 똑똑 모달 닫고 서브 모달 열기
+  // modal-overlay 닫은 뒤 충분한 딜레이 후 tree-day-overlay 열기
   document.getElementById('modal-overlay').classList.remove('open');
-  document.getElementById('tree-day-overlay').classList.add('open');
+  setTimeout(() => {
+    document.getElementById('tree-day-overlay').classList.add('open');
+  }, 80);
 }
 
 function closeTreeDay() {
   document.getElementById('tree-day-overlay').classList.remove('open');
-  // 똑똑 모달 다시 열기
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -2396,33 +3485,133 @@ function closeTreeDay() {
 let grownPickSelected = null;
 
 // 졸업 나무 방문 인사말 풀
-const VISITING_GREETINGS = {
+const FAREWELL_GREETINGS = {
   pine: [
-    "잘 지내셨어요?\n저도 잘 있었습니다. 🌲",
-    "오랜만이네요.\n변함없이 여기 있었어요. 🌲",
-    "보고 싶었어요.\n당신도 그랬으면 좋겠어요. 🌿",
-    "별일 없으셨죠?\n저도 조용히 잘 있었어요. 🌲",
-    "이렇게 불러주셔서\n기뻐요, 정말로. 🌿",
-    "오래됐네요.\n그래도 기억하고 있었어요. 🌲",
-    "잠깐이라도\n와주셔서 고마워요. 🌿"
+    "근처에 있으니 다음에도 불러주세요.\n잘 지내요. 🌲",
+    "언제든 부르면 올게요.\n그때까지 건강하세요. 🌿",
+    "멀리 가는 게 아니에요.\n잘 지내고 있을게요. 🌲",
+    "또 불러줄 거죠?\n기다리고 있을게요. 🌿"
   ],
   cherry: [
-    "어머, 불러주셨어요!\n저도 보고 싶었어요 🌸",
-    "오랜만이에요!\n잊지 않고 있었어요 🌸",
-    "잘 지내셨어요?\n저는 기다리고 있었어요 💕",
-    "이렇게 찾아와 주시다니.\n정말 기뻐요 🌸",
-    "목소리가 들리는 것 같았어요.\n역시 오셨네요 🌸",
-    "오래간만이에요.\n그래도 설레는 건 여전해요 💕",
-    "불러주셔서 고마워요.\n저도 잘 있었어요 🌸"
+    "근처에 있을게요, 언제든 불러줘요!\n잘 지내요 🌸",
+    "가는 게 아니에요, 다음에 또 와요!\n건강하게 지내요 💕",
+    "또 불러줄 거죠? 기다릴게요!\n그때까지 잘 지내요 🌸",
+    "곁에 있을게요, 외로우면 불러줘요!\n잘 있어요, 정말로 💕"
   ],
   orange: [
-    "앗, 불러주셨어요?!\n저 여기 있었어요! 🍊",
-    "오래간만이에요!\n저 잘 지냈어요, 엄청요! 🍊",
-    "보고 싶었어요!\n잘 지내셨죠?! 🍊",
-    "드디어 불러주셨다!\n기다리고 있었어요! 🍊",
-    "반가워요 반가워요!\n저도 잘 자라고 있어요 🍊",
-    "역시 저를 잊지 않으셨네요!\n감사해요! 🍊",
-    "이야, 오셨군요!\n오늘 기분 최고예요! 🍊"
+    "근처에 있으니까 또 불러줘요!!\n잘 지내요, 파이팅!! 🍊⚡",
+    "가는 게 아니에요, 잠깐 뒤로 물러나는 거예요!!\n또 와요, 금방!! 🍊",
+    "다음에 또 불러줄 거죠?!\n그때까지 씩씩하게 지내요!! 🍊⚡",
+    "곁에 있을게요!! 언제든 불러줘요!!\n잘 있어요, 진짜로!! 🍊"
+  ]
+};
+
+let _visitingTreeDismissTimer = null;
+
+function scheduleVisitingTreeDismiss() {
+  if (_visitingTreeDismissTimer) {
+    clearTimeout(_visitingTreeDismissTimer);
+    _visitingTreeDismissTimer = null;
+  }
+  // 20초 후 작별 인사 말풍선
+  _visitingTreeDismissTimer = setTimeout(() => {
+    const tree = window._visitingTree;
+    if (!tree) return;
+    const bubble = document.getElementById('visiting-bubble');
+    const textEl = document.getElementById('visiting-bubble-text');
+    if (bubble && textEl) {
+      const pool = FAREWELL_GREETINGS[tree.type] || FAREWELL_GREETINGS.pine;
+      textEl.textContent = pool[Math.floor(Math.random() * pool.length)];
+      bubble.classList.remove('visible', 'floating');
+      void bubble.offsetWidth;
+      bubble.classList.add('visible');
+      setTimeout(() => bubble.classList.add('floating'), 500);
+    }
+    // 5초 후 옛나무 + 말풍선 페이드아웃
+    setTimeout(() => {
+      window._visitingTree = null;
+      const vGhost = document.querySelector('.visiting-tree-ghost');
+      if (vGhost) {
+        vGhost.style.transition = 'opacity 0.8s ease';
+        vGhost.style.opacity = '0';
+        setTimeout(() => vGhost.remove(), 800);
+      }
+      if (bubble) {
+        bubble.style.transition = 'opacity 0.8s ease';
+        bubble.style.opacity = '0';
+        setTimeout(() => {
+          bubble.style.display = 'none';
+          bubble.style.opacity = '';
+          bubble.style.transition = '';
+          bubble.classList.remove('visible', 'floating');
+        }, 800);
+      }
+      // 옛나무 완전히 사라진 후(0.9초) 새나무 원위치(55%)로 복원
+      setTimeout(() => {
+        const treeStage = document.getElementById('tree-stage');
+        if (treeStage) {
+          treeStage.style.transition = 'left 0.7s cubic-bezier(0.34,1.2,0.64,1)';
+          treeStage.style.left = '55%';
+          setTimeout(() => {
+            treeStage.style.transition = '';
+            treeStage.style.left = '';
+          }, 750);
+        }
+        // 새나무 말풍선도 함께 이동
+        setTimeout(() => {
+          const mainBubble = document.getElementById('speech-bubble');
+          const ts = document.getElementById('tree-stage');
+          if (mainBubble && mainBubble.style.display !== 'none' && ts) {
+            const appEl = document.getElementById('app');
+            const appRect = appEl ? appEl.getBoundingClientRect() : { left: 0 };
+            const stageRect = ts.getBoundingClientRect();
+            mainBubble.style.left = (stageRect.left - appRect.left + stageRect.width / 2) + 'px';
+          }
+        }, 750);
+      }, 900);
+    }, 5000);
+  }, 20000);
+}
+
+const VISITING_GREETINGS = {
+  // 소나무: 차분하고 묵직한 성격. 말수 적지만 깊이 있음.
+  pine: [
+    "오셨군요.\n그간 별고 없으셨는지요. 🌲",
+    "몸은 건강하신가요.\n저는 변함없이 여기 있었습니다. 🌲",
+    "요즘 어떻게 지내고 계신가요.\n조용히 궁금했었어요. 🌿",
+    "오랜만이네요.\n그래도 기억은 늘 여기 있었어요. 🌲",
+    "무리하지 않으셨는지 걱정됐어요.\n잘 쉬고 계신가요. 🌿",
+    "날이 많이 지났네요.\n그 사이 힘든 일은 없으셨나요. 🌲",
+    "요즘 뭘 하며 지내시는지\n가끔 생각했었어요. 🌿",
+    "밥은 잘 챙겨 드시나요.\n작은 것들이 중요하니까요. 🌲",
+    "불러주셔서 고맙습니다.\n저도 잘 있었어요, 조용히. 🌿",
+    "이렇게라도 보게 되니\n다행이에요, 정말로. 🌲"
+  ],
+  // 벚나무: 감성적이고 따뜻한 성격. 감정 표현이 풍부하고 다정함.
+  cherry: [
+    "어머, 와주셨어요!\n얼마나 기다렸는지 몰라요 🌸",
+    "보고 싶었어요, 정말로요.\n요즘 잘 지내고 계신 거죠? 💕",
+    "몸은 건강하신가요?\n걱정이 많이 됐었어요 🌸",
+    "요즘 어떻게 지내세요?\n좋은 일들만 가득했으면 해요 💕",
+    "밥은 잘 챙겨 드시고 있죠?\n그게 제일 걱정이에요 🌸",
+    "오는 길에 힘들지 않으셨어요?\n먼 곳에서도 느껴지더라고요 💕",
+    "요즘 뭐 하며 지내세요?\n이야기가 듣고 싶었어요 🌸",
+    "잠은 잘 자고 계신 거죠?\n편히 쉬셨으면 해서요 💕",
+    "불러주셔서 너무 기뻐요.\n저도 잘 있었어요, 당신 덕분에 🌸",
+    "또 와줄 거죠?\n기다릴게요, 언제든지요 💕"
+  ],
+  // 귤나무: 활발하고 유쾌한 성격. 에너지 넘치고 솔직함.
+  orange: [
+    "야호, 불러주셨다!!\n그동안 잘 지냈죠?! 🍊",
+    "몸은 건강한 거 맞죠?!\n걱정됐단 말이에요! 🍊",
+    "요즘 뭐 하며 지냈어요?!\n저는 궁금한 거 엄청 쌓였어요! 🍊",
+    "밥은 제대로 먹고 있는 거죠?!\n빼먹으면 안 돼요, 진짜로! 🍊",
+    "오랜만이에요!\n저는 씩씩하게 잘 있었어요! 🍊",
+    "힘든 일은 없었죠?!\n있었으면 진작 불러주지! 🍊",
+    "요즘 잠은 잘 자요?!\n저는 매일 꿀잠 잤어요! 🍊",
+    "와주셔서 기분 최고예요!\n오늘 뭐 재밌는 일 있었어요?! 🍊",
+    "보고 싶었다고요, 저도요!\n이제 자주 불러줘요, 네?! 🍊",
+    "또 올 거죠?!\n다음엔 더 빨리 와요, 기다릴게요! 🍊"
   ]
 };
 
@@ -2489,6 +3678,9 @@ function confirmGrownTreeVisit() {
 
   // 잠시 후 방문 나무 말풍선 표시
   setTimeout(() => showVisitingBubble(picked), 700);
+
+  // 25초 후 자동 퇴장 스케줄
+  scheduleVisitingTreeDismiss();
 }
 
 function renderGrownTreesWithVisitor() {
@@ -2499,24 +3691,49 @@ function renderGrownTreesWithVisitor() {
   const treeStage = document.getElementById('tree-stage');
   if (!page4 || !treeStage) return;
 
-  // 주인공 나무는 항상 중앙
-  treeStage.style.left = '60%';
+  if (!window._visitingTree) {
+    // 이전나무 없으면 새나무 원위치
+    treeStage.style.left = '';
+    return;
+  }
 
-  if (!window._visitingTree) return;
+  // ── 새나무(주인공)를 오른쪽 구석으로 이동
+  treeStage.style.transition = 'left 0.6s cubic-bezier(0.34,1.2,0.64,1)';
+  treeStage.style.left = '78%';
 
+  // ── 새나무 말풍선 즉시 숨김 (페이드 타이머도 취소)
+  if (_bubbleFadeTimer) { clearTimeout(_bubbleFadeTimer); _bubbleFadeTimer = null; }
+  const mainBubble = document.getElementById('speech-bubble');
+  if (mainBubble) {
+    mainBubble.style.transition = 'opacity 0.4s ease';
+    mainBubble.style.opacity = '0';
+    setTimeout(() => {
+      mainBubble.style.display = 'none';
+      mainBubble.style.opacity = '1';
+      mainBubble.style.transition = '';
+      mainBubble.classList.remove('visible', 'floating');
+    }, 400);
+  }
+
+  // ── 이전나무를 왼쪽 구석에 등장
   const v = window._visitingTree;
   const vGhost = document.createElement('div');
   vGhost.className = 'visiting-tree-ghost';
   vGhost.style.position = 'absolute';
-  vGhost.style.left     = '26%';       // 주인공 왼쪽
-  vGhost.style.bottom   = '31%';       // 살짝 뒤(높이 살짝 낮게)
-  vGhost.style.transform = 'translateX(-50%) scale(0.38)';  // 주인공보다 작게
-  vGhost.style.transformOrigin = 'bottom center';
+  vGhost.style.left     = '2%';        // 진짜 왼쪽 구석
+  vGhost.style.bottom   = '31%';
+  vGhost.style.transform = 'none';
+  vGhost.style.transformOrigin = 'bottom left';
   vGhost.style.zIndex   = '4';
   vGhost.style.opacity  = '0.88';
   vGhost.style.filter   = 'saturate(0.85) brightness(0.9)';
-  vGhost.style.pointerEvents = 'none';
+  vGhost.style.pointerEvents = 'auto';
+  vGhost.style.cursor   = 'pointer';
   vGhost.style.animation = 'growPop 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards';
+  vGhost.onclick = (e) => {
+    e.stopPropagation();
+    showVisitingBubble(window._visitingTree);
+  };
 
   const treeSvg = getTreeSVG(v.type, v.days);
   const island = document.createElement('div');
@@ -2532,41 +3749,64 @@ function showVisitingBubble(tree) {
   const textEl = document.getElementById('visiting-bubble-text');
   if (!bubble || !textEl) return;
 
-  // 인사말 선택 (나무 종류 + 랜덤)
+  // 1차 인사말 선택 (나무 종류 + 랜덤, 중복 방지)
   const pool = VISITING_GREETINGS[tree.type] || VISITING_GREETINGS.pine;
-  const idx = Math.floor(Math.random() * pool.length);
-  textEl.textContent = pool[idx];
+  const idx1 = Math.floor(Math.random() * pool.length);
+  textEl.textContent = pool[idx1];
 
-  // ghost 렌더 후 실제 위치 계산 (약간 딜레이)
-  setTimeout(() => {
-    const page4 = document.getElementById('page4');
-    const vGhost = document.querySelector('.visiting-tree-ghost');
-    if (!vGhost || !page4) return;
-
-    const appRect = page4.getBoundingClientRect();
-    const ghostRect = vGhost.getBoundingClientRect();
-    // 스케일 적용된 ghost의 화면상 중앙 x, 상단 y
-    const cx = ghostRect.left - appRect.left + ghostRect.width / 2;
-    const ghostTopY = ghostRect.top - appRect.top;
-
-    bubble.style.display = 'block';
-    bubble.style.left = cx + 'px';
-    bubble.style.top = '0px';
-    bubble.style.transform = 'translateX(-50%)';
-
-    const bubH = bubble.getBoundingClientRect().height;
-    let finalTop = ghostTopY - bubH - 12;
-    if (finalTop < 80) finalTop = ghostTopY + ghostRect.height + 8; // 공간 없으면 아래로
-    bubble.style.top = finalTop + 'px';
-
-    bubble.classList.remove('visible', 'floating');
-    void bubble.offsetWidth;
-    bubble.classList.add('visible');
+  // 말풍선 위치 계산 및 표시
+  const positionAndShow = (animate) => {
     setTimeout(() => {
-      bubble.classList.remove('visible');
-      bubble.classList.add('visible', 'floating');
-    }, 500);
-  }, 100);
+      const page4 = document.getElementById('page4');
+      const vGhost = document.querySelector('.visiting-tree-ghost');
+      if (!vGhost || !page4) return;
+
+      const appRect = page4.getBoundingClientRect();
+      const ghostRect = vGhost.getBoundingClientRect();
+      const cx = ghostRect.left - appRect.left + ghostRect.width / 2;
+      const ghostTopY = ghostRect.top - appRect.top;
+
+      bubble.style.display = 'block';
+      bubble.style.left = cx + 'px';
+      bubble.style.top = '0px';
+      bubble.style.transform = 'translateX(-50%)';
+
+      const bubH = bubble.getBoundingClientRect().height;
+      let finalTop = ghostTopY - bubH - 12;
+      if (finalTop < 80) finalTop = ghostTopY + ghostRect.height + 8;
+      bubble.style.top = finalTop + 'px';
+
+      if (animate) {
+        bubble.classList.remove('visible', 'floating');
+        void bubble.offsetWidth;
+        bubble.classList.add('visible');
+        setTimeout(() => {
+          bubble.classList.remove('visible');
+          bubble.classList.add('visible', 'floating');
+        }, 500);
+      }
+    }, 100);
+  };
+
+  positionAndShow(true);
+
+  // 5초 후 2차 멘트로 교체 (중복 방지)
+  setTimeout(() => {
+    if (!window._visitingTree) return; // 이미 퇴장했으면 무시
+    let idx2;
+    do { idx2 = Math.floor(Math.random() * pool.length); }
+    while (pool.length > 1 && idx2 === idx1);
+
+    // 텍스트만 살짝 페이드 교체
+    textEl.style.transition = 'opacity 0.4s ease';
+    textEl.style.opacity = '0';
+    setTimeout(() => {
+      textEl.textContent = pool[idx2];
+      textEl.style.opacity = '1';
+    }, 400);
+
+    positionAndShow(false); // 위치 재계산만 (애니메이션 없이)
+  }, 5000);
 }
 
 // ============================================================
@@ -2574,9 +3814,8 @@ function showVisitingBubble(tree) {
 // ============================================================
 function renderGrownTrees() {
   document.querySelectorAll('.grown-tree-ghost').forEach(el => el.remove());
-  // 졸업 나무는 자동으로 뒤에 서있지 않음 — '함께한 나무들 부르기'로만 소환
   const treeStage = document.getElementById('tree-stage');
-  if (treeStage) treeStage.style.left = '60%';
+  if (treeStage) treeStage.style.left = ''; // inline style 제거 → CSS 기본값(55%) 적용
 }
 
 // ============================================================
@@ -2629,6 +3868,14 @@ async function updateLabLocationInfo() {
 function closeLab() {
   document.getElementById('lab-overlay').classList.remove('open');
 }
+
+function resetAllData() {
+  if (!confirm("모든 기록(방문일수, 나무 이름, 친밀도 등)을 지우고 처음부터 시작할까요?")) return;
+  localStorage.removeItem("treegame_v2");
+  localStorage.removeItem("_careBubbleShownDate");
+  closeLab();
+  location.reload();
+}
 function selectLabTree(type) {
   labSelectedTree = type;
   ['pine','cherry','orange'].forEach(t => {
@@ -2669,18 +3916,50 @@ function goStart() {
   if (s && s.nickname && s.treeName && s.treeType) {
     state = s;
     checkAndIncrementDay();
-    showPage(4);
-    showLoadingOverlay();
-    // 위치 권한 명시적으로 먼저 요청 (팝업 유도)
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        () => {}, () => {}, { timeout: 1000, maximumAge: 0 }
-      );
-    }
-    initMainGame();
+    // 위치권한을 버튼 탭 직후 즉시 요청 (사용자 제스처 컨텍스트 유지)
+    _requestGeoThenStart();
   } else {
     showPage(2);
   }
+}
+
+// 위치권한 → 게임 진입 순서 보장
+function _requestGeoThenStart() {
+  if (!navigator.geolocation) {
+    window._lastLat = SEOUL_LAT; window._lastLon = SEOUL_LON;
+    showPage(4); showLoadingOverlay(); initMainGame();
+    return;
+  }
+  // 모달을 page1 위에 바로 띄움 (page4 진입 전)
+  const overlay = document.getElementById('geo-permission-overlay');
+  if (overlay) overlay.style.display = 'flex';
+  setGeoModalState('🌲', '위치를 확인하고 있어요', '잠깐만 기다려주세요...', '');
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      window._lastLat = pos.coords.latitude;
+      window._lastLon = pos.coords.longitude;
+      window._locationSource = 'gps';
+      setGeoModalState('✅', '위치를 확인했어요!', '실제 날씨로 나무를 키워볼게요 🌿', '');
+      setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+        showPage(4); showLoadingOverlay(); initMainGame();
+      }, 700);
+    },
+    (err) => {
+      window._lastLat = SEOUL_LAT; window._lastLon = SEOUL_LON;
+      window._locationSource = 'fallback';
+      const msg = err.code === 1
+        ? '위치 권한이 없어서 날씨를 직접 찾아볼게요 🌿'
+        : '위치를 찾지 못했어요.\n날씨를 직접 찾아볼게요 🌿';
+      setGeoModalState('🌤️', '날씨를 불러올게요', msg, '');
+      setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+        showPage(4); showLoadingOverlay(); initMainGame();
+      }, 1400);
+    },
+    { timeout: 10000, maximumAge: 300000, enableHighAccuracy: false }
+  );
 }
 function goPage3() {
   const nick = document.getElementById('inputNickname').value.trim();
@@ -2703,9 +3982,7 @@ function confirmTree() {
   state.lastVisit = '';
   checkAndIncrementDay();
   saveState();
-  showPage(4);
-  showLoadingOverlay();
-  initMainGame();
+  _requestGeoThenStart();
 }
 
 function getLocalDateStr() {
@@ -2732,27 +4009,37 @@ function checkAndIncrementDay() {
 const SEOUL_LAT = 37.5665;
 const SEOUL_LON = 126.9780;
 
-// WMO 코드 → 내부 weatherCode 변환
+// WMO 코드 → 내부 weatherCode 변환 (전체 코드표 기준 수정)
+// 0=맑음, 1=구름/흐림, 2=비(이슬비 포함), 3=눈
 function mapWMO(code, temp, ws) {
   windSpeed = ws ?? 3;
-  if      (code === 0)   { weatherCode = 0; weatherDesc = `맑음 ${temp}°`; }
-  else if (code <= 3)    { weatherCode = 1; weatherDesc = `구름 ${temp}°`; }
-  else if (code <= 49)   { weatherCode = 1; weatherDesc = `흐림 ${temp}°`; }
-  else if (code <= 67)   { weatherCode = 2; weatherDesc = `비 ${temp}°`; }
-  else if (code <= 77)   { weatherCode = 3; weatherDesc = `눈 ${temp}°`; }
-  else if (code <= 82)   { weatherCode = 2; weatherDesc = `소나기 ${temp}°`; }
-  else if (code <= 86)   { weatherCode = 3; weatherDesc = `눈소나기 ${temp}°`; }
-  else                   { weatherCode = 2; weatherDesc = `뇌우 ${temp}°`; }
+  currentTemp = (temp !== undefined && !isNaN(Number(temp))) ? Number(temp) : null;
+  const c = Number(code);
+  if      (isNaN(c))   { weatherCode = 0; weatherDesc = `맑음 ${temp}°`; }   // undefined 방어
+  else if (c === 0)    { weatherCode = 0; weatherDesc = `맑음 ${temp}°`; }
+  else if (c <= 3)     { weatherCode = 1; weatherDesc = `구름 ${temp}°`; }
+  else if (c <= 49)    { weatherCode = 1; weatherDesc = `흐림 ${temp}°`; }
+  else if (c <= 57)    { weatherCode = 2; weatherDesc = `이슬비 ${temp}°`; }  // 51~57 이슬비/보슬비
+  else if (c <= 67)    { weatherCode = 2; weatherDesc = `비 ${temp}°`; }      // 61~67 비
+  else if (c <= 77)    { weatherCode = 3; weatherDesc = `눈 ${temp}°`; }      // 71~77 눈
+  else if (c <= 82)    { weatherCode = 2; weatherDesc = `소나기 ${temp}°`; }  // 80~82 소나기
+  else if (c <= 86)    { weatherCode = 3; weatherDesc = `눈소나기 ${temp}°`; }
+  else if (c <= 99)    { weatherCode = 2; weatherDesc = `뇌우 ${temp}°`; }    // 95~99 뇌우
+  else                 { weatherCode = 1; weatherDesc = `흐림 ${temp}°`; }
 }
 
 // open-meteo로 날씨 fetch
 async function fetchWeatherByCoords(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weathercode,temperature_2m,windspeed_10m&timezone=auto`;
+  // weather_code(신규) + weathercode(구버전) 둘 다 요청해 호환성 확보
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,weathercode,temperature_2m,wind_speed_10m,windspeed_10m&timezone=auto`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('open-meteo 응답 오류');
   const data = await res.json();
   const cur = data.current;
-  mapWMO(cur.weathercode, Math.round(cur.temperature_2m), cur.windspeed_10m);
+  // 신규 필드명 우선, 없으면 구버전 필드명 사용
+  const wcode = cur.weather_code ?? cur.weathercode;
+  const wspeed = cur.wind_speed_10m ?? cur.windspeed_10m;
+  mapWMO(wcode, Math.round(cur.temperature_2m), wspeed);
 }
 
 // 날씨 UI 전체 반영 (배지 + 하늘 + 풀 + 나무 + 말풍선)
@@ -2774,78 +4061,27 @@ async function applySeoulFallback() {
   applyWeatherUI();
 }
 
-// 앱 시작 시 위치권한 즉시 요청
-// 날씨 로드 완료 후 콜백 실행 (버그 방지: 화면 그리기 전에 날씨 확정)
+// 날씨 fetch (좌표 -> open-meteo)
+function _fetchWeatherAndRender(lat, lon, onReady) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,weathercode,temperature_2m,wind_speed_10m,windspeed_10m&timezone=auto`;
+  const controller = new AbortController();
+  const tid = setTimeout(() => controller.abort(), 6000);
+  fetch(url, { signal: controller.signal })
+    .then(res => { clearTimeout(tid); if (!res.ok) throw new Error(); return res.json(); })
+    .then(data => {
+      const cur = data.current;
+      mapWMO(cur.weather_code ?? cur.weathercode, Math.round(cur.temperature_2m), cur.wind_speed_10m ?? cur.windspeed_10m);
+    })
+    .catch(() => { clearTimeout(tid); weatherCode = 0; weatherDesc = '맑음'; windSpeed = 3; })
+    .finally(() => { if (onReady) onReady(); });
+}
+
+// 날씨 로드 완료 후 콜백 실행
+// 좌표는 _requestGeoThenStart에서 이미 확정된 상태로 진입함
 function getLocation(onReady) {
-  let called = false;
-  function finish() {
-    if (called) return;
-    called = true;
-    if (onReady) onReady();
-  }
-
-  const done = async (lat, lon) => {
-    try {
-      const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), 5000);
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weathercode,temperature_2m,windspeed_10m&timezone=auto`;
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(tid);
-      if (res.ok) {
-        const data = await res.json();
-        const cur = data.current;
-        mapWMO(cur.weathercode, Math.round(cur.temperature_2m), cur.windspeed_10m);
-      }
-    } catch(e) {
-      weatherCode = 0; weatherDesc = '맑음'; windSpeed = 3;
-    }
-    finish();
-  };
-
-  // 5초 안에 날씨 못 받으면 기본값으로 진행
-  const globalTimeout = setTimeout(() => {
-    weatherCode = 0; weatherDesc = '맑음'; windSpeed = 3;
-    finish();
-  }, 5000);
-
-  const proceedWithFallback = async () => {
-    clearTimeout(globalTimeout);
-    window._lastLat = SEOUL_LAT;
-    window._lastLon = SEOUL_LON;
-    window._locationSource = 'fallback';
-    try {
-      const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), 4000);
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${SEOUL_LAT}&longitude=${SEOUL_LON}&current=weathercode,temperature_2m,windspeed_10m&timezone=auto`;
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(tid);
-      if (res.ok) {
-        const data = await res.json();
-        const cur = data.current;
-        mapWMO(cur.weathercode, Math.round(cur.temperature_2m), cur.windspeed_10m);
-      }
-    } catch(e) {
-      weatherCode = 0; weatherDesc = '맑음'; windSpeed = 3;
-    }
-    finish();
-  };
-
-  if (!navigator.geolocation) {
-    clearTimeout(globalTimeout);
-    proceedWithFallback();
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      clearTimeout(globalTimeout);
-      window._lastLat = pos.coords.latitude;
-      window._lastLon = pos.coords.longitude;
-      window._locationSource = 'gps';
-      done(pos.coords.latitude, pos.coords.longitude);
-    },
-    () => { clearTimeout(globalTimeout); proceedWithFallback(); },
-    { timeout: 8000, maximumAge: 0, enableHighAccuracy: false }
-  );
+  const lat = window._lastLat || SEOUL_LAT;
+  const lon = window._lastLon || SEOUL_LON;
+  _fetchWeatherAndRender(lat, lon, onReady);
 }
 
 function updateWeatherEffects() {
@@ -2956,16 +4192,27 @@ function initClouds(W, H) {
 
 function initStars(W, H) {
   stars = [];
-  const count = 80;
+  const count = 120;
+  const starColors = [
+    '255,255,220',
+    '220,240,255',
+    '255,220,180',
+    '200,220,255',
+    '255,255,255',
+  ];
   for (let i = 0; i < count; i++) {
+    const isBig = Math.random() < 0.12;
     stars.push({
       x: Math.random() * W,
       y: Math.random() * H * 0.55,
-      r: Math.random() * 1.4 + 0.4,
-      // 반짝임: 각 별마다 다른 속도·위상
-      twinkleSpeed: 0.6 + Math.random() * 1.4,
+      r: isBig ? (Math.random() * 1.2 + 1.6) : (Math.random() * 1.0 + 0.3),
+      twinkleSpeed: isBig ? (0.4 + Math.random() * 0.8) : (0.8 + Math.random() * 2.2),
       twinklePhase: Math.random() * Math.PI * 2,
-      baseBright:   0.35 + Math.random() * 0.45,
+      baseBright:   isBig ? (0.6 + Math.random() * 0.35) : (0.3 + Math.random() * 0.5),
+      color: starColors[Math.floor(Math.random() * starColors.length)],
+      isBig,
+      flarePhase: Math.random() * Math.PI * 2,
+      flareSpeed: 0.1 + Math.random() * 0.3,
     });
   }
 }
@@ -3038,17 +4285,26 @@ function drawSkyFrame(t, dt = 0.016) {
   // ── 하늘 배경
   ctx.clearRect(0, 0, W, H * 0.70);
   const grad = ctx.createLinearGradient(0, 0, 0, H * 0.68);
+  // 밤(20시~5시)은 초저녁보다 더 진한 어둠
+  const isDeepNight = currentHour < 5 || currentHour >= 20;
+  const isDusk      = currentHour >= 17 && currentHour < 20; // 초저녁
+
   if (isNight && weatherCode >= 1) {
-    // 흐린 밤 — 짙은 남색 + 회색
-    grad.addColorStop(0,   '#1a2030');
-    grad.addColorStop(0.5, '#252838');
-    grad.addColorStop(1,   '#303448');
+    // 흐린 밤 — 더 짙은 남색
+    grad.addColorStop(0,   '#0e1220');
+    grad.addColorStop(0.5, '#161a2a');
+    grad.addColorStop(1,   '#1e2235');
+  } else if (isDeepNight && weatherCode === 0) {
+    // 맑은 밤 — 깊고 어두운 남색
+    grad.addColorStop(0,   '#080c1a');
+    grad.addColorStop(0.5, '#0e1428');
+    grad.addColorStop(1,   '#141c30');
   } else if (weatherCode >= 1 && !isNight) {
     // 흐린 낮
     grad.addColorStop(0, '#7a8e9c');
     grad.addColorStop(1, '#b0c2cc');
   } else {
-    // 맑음 (낮/저녁/새벽/밤)
+    // 맑음 (낮/저녁/새벽)
     grad.addColorStop(0,   colors[0]);
     grad.addColorStop(0.5, colors[1]);
     grad.addColorStop(1,   colors[2]);
@@ -3056,24 +4312,72 @@ function drawSkyFrame(t, dt = 0.016) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H * 0.70);
 
-  // ── 별 반짝임 (맑은 밤 or 구름 낀 밤)
+  // ── 별 반짝임 (밤 + 초저녁 모두 적용)
   if (isNight) {
-    // 구름 낀 밤엔 별이 옅게
-    const starOpMul = weatherCode >= 1 ? 0.3 : 1.0;
+    const starOpMul = weatherCode >= 1 ? 0.55 : 1.0;
     for (const s of stars) {
-      const bright = s.baseBright + Math.sin(t * s.twinkleSpeed + s.twinklePhase) * 0.28;
+      const sc = s.color || '255,255,220'; // fallback
+      const bright = s.baseBright + Math.sin(t * s.twinkleSpeed + s.twinklePhase) * 0.38;
+      const finalBright = Math.max(0, bright * starOpMul);
+      if (finalBright <= 0.01) continue;
+
+      // 글로우 효과 (큰 별 전용)
+      if (s.isBig && weatherCode === 0) {
+        const glowR = s.r * (4 + Math.sin(t * s.twinkleSpeed + s.twinklePhase) * 1.5);
+        const glowAlpha = finalBright * 0.25;
+        const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, glowR);
+        glow.addColorStop(0, `rgba(${sc},${glowAlpha})`);
+        glow.addColorStop(1, `rgba(${sc},0)`);
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, glowR, 0, Math.PI * 2);
+        ctx.fillStyle = glow;
+        ctx.fill();
+      }
+
+      // 별 본체
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,220,${Math.max(0, bright * starOpMul)})`;
+      ctx.fillStyle = `rgba(${sc},${finalBright})`;
       ctx.fill();
-      // 밝은 별엔 작은 십자 광선
-      if (s.r > 1.2 && weatherCode === 0) {
-        const gl = bright * 0.5;
-        ctx.strokeStyle = `rgba(255,255,200,${gl})`;
-        ctx.lineWidth = 0.6;
+
+      // 십자 광선 (큰 별 + 맑은/흐린 밤)
+      if (s.isBig) {
+        const crossBright = finalBright * 0.7;
+        const crossLen = s.r * (3.5 + Math.sin(t * s.twinkleSpeed * 1.3 + s.twinklePhase) * 1.2);
+        const grad1 = ctx.createLinearGradient(s.x - crossLen, s.y, s.x + crossLen, s.y);
+        grad1.addColorStop(0,   `rgba(${sc},0)`);
+        grad1.addColorStop(0.5, `rgba(${sc},${crossBright})`);
+        grad1.addColorStop(1,   `rgba(${sc},0)`);
+        ctx.strokeStyle = grad1;
+        ctx.lineWidth = 0.8;
         ctx.beginPath();
-        ctx.moveTo(s.x - s.r * 2.5, s.y); ctx.lineTo(s.x + s.r * 2.5, s.y);
-        ctx.moveTo(s.x, s.y - s.r * 2.5); ctx.lineTo(s.x, s.y + s.r * 2.5);
+        ctx.moveTo(s.x - crossLen, s.y); ctx.lineTo(s.x + crossLen, s.y);
+        ctx.stroke();
+        const grad2 = ctx.createLinearGradient(s.x, s.y - crossLen, s.x, s.y + crossLen);
+        grad2.addColorStop(0,   `rgba(${sc},0)`);
+        grad2.addColorStop(0.5, `rgba(${sc},${crossBright})`);
+        grad2.addColorStop(1,   `rgba(${sc},0)`);
+        ctx.strokeStyle = grad2;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y - crossLen); ctx.lineTo(s.x, s.y + crossLen);
+        ctx.stroke();
+        // 대각선 광선
+        const diagLen = crossLen * 0.55;
+        const diagBright = crossBright * 0.5;
+        ctx.strokeStyle = `rgba(${sc},${diagBright})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(s.x - diagLen, s.y - diagLen); ctx.lineTo(s.x + diagLen, s.y + diagLen);
+        ctx.moveTo(s.x + diagLen, s.y - diagLen); ctx.lineTo(s.x - diagLen, s.y + diagLen);
+        ctx.stroke();
+      } else if (s.r > 1.0) {
+        const gl = finalBright * 0.45;
+        const cl = s.r * 2.8;
+        ctx.strokeStyle = `rgba(${sc},${gl})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(s.x - cl, s.y); ctx.lineTo(s.x + cl, s.y);
+        ctx.moveTo(s.x, s.y - cl); ctx.lineTo(s.x, s.y + cl);
         ctx.stroke();
       }
     }
@@ -3119,14 +4423,70 @@ function drawSkyFrame(t, dt = 0.016) {
     ctx.beginPath(); ctx.arc(sunX, sunY, 22, 0, Math.PI * 2); ctx.fill();
   }
 
+  // ── 흐린 낮: 구름 뒤 태양 흔적 (희미한 광원)
+  if (!isNight && weatherCode >= 1) {
+    const angle = ((currentHour - 6) / 12) * Math.PI;
+    const sunX  = W / 2 + Math.cos(Math.PI - angle) * (W * 0.38);
+    const sunY  = H * 0.45 - Math.sin(Math.PI - angle) * (H * 0.32);
+
+    // 천천히 맥동하는 흐림 강도 (구름 사이로 빛이 변하는 느낌)
+    const pulse = 0.5 + Math.sin(t * 0.35) * 0.12;
+
+    // 넓은 빛 번짐 — 구름 뒤 광원 표시
+    const glowFar = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, W * 0.28);
+    glowFar.addColorStop(0,   `rgba(240,220,160,${0.18 * pulse})`);
+    glowFar.addColorStop(0.4, `rgba(220,200,130,${0.10 * pulse})`);
+    glowFar.addColorStop(1,   'rgba(200,180,100,0)');
+    ctx.fillStyle = glowFar;
+    ctx.beginPath(); ctx.arc(sunX, sunY, W * 0.28, 0, Math.PI * 2); ctx.fill();
+
+    // 중간 광원
+    const glowMid = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 80);
+    glowMid.addColorStop(0,   `rgba(255,235,170,${0.28 * pulse})`);
+    glowMid.addColorStop(0.5, `rgba(240,215,140,${0.14 * pulse})`);
+    glowMid.addColorStop(1,   'rgba(220,195,110,0)');
+    ctx.fillStyle = glowMid;
+    ctx.beginPath(); ctx.arc(sunX, sunY, 80, 0, Math.PI * 2); ctx.fill();
+
+    // 핵심부 — 구름이 얇을 때 살짝 보이는 태양 원판
+    ctx.save();
+    ctx.globalAlpha = 0.13 * pulse;
+    ctx.fillStyle = '#fff5c0';
+    ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
   // ── 구름 흐름 (dt 기반 — 풍속 1 m/s → 약 4 px/s)
   const pxPerSec = 6 + windSpeed * 3.5;
+
+  // 흐린 낮: 태양 위치 계산 (구름 색조 보정용)
+  let overcastSunX = null, overcastSunY = null;
+  if (!isNight && weatherCode >= 1) {
+    const _angle = ((currentHour - 6) / 12) * Math.PI;
+    overcastSunX = W / 2 + Math.cos(Math.PI - _angle) * (W * 0.38);
+    overcastSunY = H * 0.45 - Math.sin(Math.PI - _angle) * (H * 0.32);
+  }
+
   for (const c of clouds) {
     c.x += c.speed * pxPerSec * dt;
     if (c.x > W + 160) c.x = -180;
-    const color = weatherCode > 0
-      ? (isNight ? `rgba(90,105,130,${c.op})` : `rgba(210,218,228,${c.op})`)
-      : (isNight ? `rgba(170,178,210,${c.op * 0.55})` : `rgba(255,255,255,${c.op})`);
+
+    let color;
+    if (weatherCode > 0 && !isNight && overcastSunX !== null) {
+      // 태양에 가까운 구름은 살짝 밝고 따뜻한 색조
+      const dx = c.x + 26 - overcastSunX;
+      const dy = c.y - overcastSunY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const proximity = Math.max(0, 1 - dist / (W * 0.5));
+      const r = Math.round(210 + proximity * 20);
+      const g = Math.round(218 + proximity * 12);
+      const b = Math.round(228 - proximity * 15);
+      color = `rgba(${r},${g},${b},${c.op})`;
+    } else {
+      color = weatherCode > 0
+        ? (isNight ? `rgba(90,105,130,${c.op})` : `rgba(210,218,228,${c.op})`)
+        : (isNight ? `rgba(170,178,210,${c.op * 0.55})` : `rgba(255,255,255,${c.op})`);
+    }
     drawCloudShape(ctx, c.x, c.y, c.scale, color);
   }
 }
@@ -3146,7 +4506,8 @@ function drawCloudShape(ctx, x, y, scale, color) {
 // ============================================================
 // GRASS ANIMATION (canvas, wind-driven)
 // ============================================================
-let grassBlades = [];
+let grassBlades  = [];
+let grassFlowers = [];  // { bladeIdx, color, petalN, born, duration }
 
 function initGrassBlades(p) {
   const canvas = document.getElementById('ground-canvas');
@@ -3302,6 +4663,96 @@ function drawGrassFrame(t) {
     ctx.lineCap = 'round';
     ctx.stroke();
   }
+  // ── 풀 끝 꽃 렌더
+  const now2 = performance.now();
+  const BLOOM_MS   = 2800;   // 피어나는 시간
+  const FULL_MS    = 10000;  // 만개 유지
+  const WITHER_MS  = 3000;   // 사라지는 시간
+  grassFlowers = grassFlowers.filter(f => (now2 - f.born) < BLOOM_MS + FULL_MS + WITHER_MS);
+  for (const f of grassFlowers) {
+    const b = grassBlades[f.bladeIdx];
+    if (!b) continue;
+    const age  = now2 - f.born;
+    // 크기: 피어남(0→1) → 유지(1) → 시듦(1→0)
+    let scale;
+    if      (age < BLOOM_MS)              scale = age / BLOOM_MS;
+    else if (age < BLOOM_MS + FULL_MS)    scale = 1;
+    else scale = 1 - (age - BLOOM_MS - FULL_MS) / WITHER_MS;
+    scale = Math.max(0, Math.min(1, scale));
+    if (scale <= 0) continue;
+
+    // 꽃 중심 = 풀날 끝 (sway 포함)
+    const sway = Math.sin(t * b.speed + b.phase) * (4 + 14 * 0) * (b.layer === 1 ? 0.9 : 0.6);
+    const cx = b.x + sway;
+    const cy = b.baseY - b.h;
+    const r  = (3.5 + f.petalN * 0.3) * scale;
+
+    ctx.save();
+    ctx.globalAlpha = 0.82 * scale;
+    ctx.translate(cx, cy);
+
+    // 꽃잎
+    const petalLen = r * 1.55;
+    for (let i = 0; i < f.petalN; i++) {
+      const angle = (i / f.petalN) * Math.PI * 2 + t * 0.18;
+      ctx.save();
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.ellipse(0, -petalLen * 0.55, r * 0.52, petalLen * 0.62, 0, 0, Math.PI * 2);
+      ctx.fillStyle = f.color;
+      ctx.fill();
+      ctx.restore();
+    }
+    // 꽃 중심
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.48, 0, Math.PI * 2);
+    ctx.fillStyle = f.centerColor;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// 풀 끝 꽃 생성 (addWetSpot에서 호출)
+function bloomGrassFlower(screenX) {
+  const canvas = document.getElementById('ground-canvas');
+  if (!canvas || grassBlades.length === 0) return;
+  const rect = canvas.getBoundingClientRect();
+  const localX = screenX - rect.left;
+  const scaleX = canvas.width / rect.width;
+  const canvasX = localX * scaleX;
+
+  // screenX 근처(±60px) 풀날 중 랜덤 2~3개 선택
+  const nearby = grassBlades
+    .map((b, i) => ({ b, i }))
+    .filter(({ b }) => Math.abs(b.x - canvasX) < 65);
+  if (nearby.length === 0) return;
+
+  const FLOWER_COLORS = [
+    { petal: 'hsl(52,95%,68%)',  center: 'hsl(38,100%,55%)' },  // 노랑
+    { petal: 'hsl(195,80%,72%)', center: 'hsl(210,70%,55%)' },  // 하늘
+    { petal: 'hsl(350,80%,72%)', center: 'hsl(10,90%,60%)'  },  // 붉은
+    { petal: 'hsl(280,60%,78%)', center: 'hsl(300,55%,58%)' },  // 보라
+    { petal: 'hsl(15,90%,80%)',  center: 'hsl(30,100%,58%)' },  // 살구
+    { petal: 'hsl(0,0%,96%)',    center: 'hsl(50,80%,65%)'  },  // 흰
+  ];
+
+  const count = 2 + Math.floor(Math.random() * 2);
+  const shuffled = nearby.sort(() => Math.random() - 0.5).slice(0, count);
+  for (const { i } of shuffled) {
+    // 같은 날에 이미 꽃이 있으면 갱신
+    const exists = grassFlowers.findIndex(f => f.bladeIdx === i);
+    if (exists >= 0) { grassFlowers[exists].born = performance.now(); continue; }
+    const c = FLOWER_COLORS[Math.floor(Math.random() * FLOWER_COLORS.length)];
+    grassFlowers.push({
+      bladeIdx:    i,
+      color:       c.petal,
+      centerColor: c.center,
+      petalN:      4 + Math.floor(Math.random() * 3),  // 4~6장
+      born:        performance.now(),
+      duration:    10000
+    });
+  }
+  if (grassFlowers.length > 120) grassFlowers.splice(0, grassFlowers.length - 120);
 }
 
 function startGrassAnimation() {
@@ -3633,106 +5084,116 @@ function getDaySeed() {
 function getGreeting(nickname, treeName, days, treeType) {
   const h = new Date().getHours();
   const seed = getDaySeed();
+  const wc = weatherCode; // 0=맑음 1=구름/흐림 2=비 3=눈
 
-  // 시간 인사 풀
-  const timeGreetings = {
-    pine: {
-      새벽: [`이 새벽에도 오셨군요, ${nickname}님`, `고요한 새벽, 잘 오셨어요, ${nickname}님`, `새벽에도 여기 오셨네요, ${nickname}님`],
-      아침: [`좋은 아침이에요, ${nickname}님`, `아침 일찍 오셨군요, ${nickname}님`, `오늘 하루도 잘 부탁해요, ${nickname}님`],
-      오전: [`오전에 들러주셨군요, ${nickname}님`, `오전 시간에 오셨네요, ${nickname}님`, `오늘도 오셨군요, ${nickname}님`],
-      낮:   [`오늘도 오셨네요, ${nickname}님`, `낮에 들러주셨군요, ${nickname}님`, `하루 중간에 잘 오셨어요, ${nickname}님`],
-      저녁: [`저녁에 오셨네요, ${nickname}님`, `오늘 하루 수고하셨어요, ${nickname}님`, `저녁 무렵 와주셨군요, ${nickname}님`],
-      밤:   [`늦게까지 수고하셨어요, ${nickname}님`, `밤에도 와주셨군요, ${nickname}님`, `오늘도 끝까지 오셨네요, ${nickname}님`]
-    },
-    cherry: {
-      새벽: [`이른 새벽에 와주셨네요, ${nickname}님`, `새벽에도 생각해주셨어요, ${nickname}님`, `고요한 새벽, 반가워요, ${nickname}님`],
-      아침: [`좋은 아침이에요, ${nickname}님`, `아침부터 와주셨군요, ${nickname}님`, `오늘 하루도 함께해요, ${nickname}님`],
-      오전: [`오전에 와주셨군요, ${nickname}님`, `오전 시간에 생각해줬어요, ${nickname}님`, `오전에 들러주셨네요, ${nickname}님`],
-      낮:   [`안녕하세요, ${nickname}님`, `낮에 와주셨군요, ${nickname}님`, `오늘도 오셨네요, ${nickname}님`],
-      저녁: [`저녁에 와주셨군요, ${nickname}님`, `하루 마무리에 와주셨어요, ${nickname}님`, `저녁 노을 아래 오셨네요, ${nickname}님`],
-      밤:   [`밤에도 생각해주셨어요, ${nickname}님`, `늦게까지 와주셨군요, ${nickname}님`, `오늘 마지막으로 들러주셨네요, ${nickname}님`]
-    },
-    orange: {
-      새벽: [`새벽부터 오셨어요?! ${nickname}님`, `이 새벽에도 대단해요, ${nickname}님`, `새벽 에너지, 받았어요! ${nickname}님`],
-      아침: [`굿모닝이에요! ${nickname}님`, `아침부터 파이팅이에요, ${nickname}님`, `오늘도 힘차게 시작이에요! ${nickname}님`],
-      오전: [`오전부터 오셨군요! ${nickname}님`, `오전에도 파이팅이에요! ${nickname}님`, `좋은 오전이에요! ${nickname}님`],
-      낮:   [`안녕하세요! ${nickname}님`, `낮에도 열심히죠? ${nickname}님`, `오늘도 오셨어요! ${nickname}님`],
-      저녁: [`저녁이네요, ${nickname}님`, `오늘 하루도 수고하셨어요! ${nickname}님`, `저녁에도 와주셨군요! ${nickname}님`],
-      밤:   [`늦은 밤까지 파이팅이에요, ${nickname}님`, `밤에도 대단해요, ${nickname}님`, `오늘도 끝까지 오셨네요! ${nickname}님`]
-    }
-  };
-
-  // 나무 변화 관찰 풀 (days 기반)
+  // 조사 계산
   const lastCharT = treeName[treeName.length - 1];
   const codeT = lastCharT.charCodeAt(0);
   const hasJongT = (codeT >= 0xAC00 && codeT <= 0xD7A3) && ((codeT - 0xAC00) % 28 !== 0);
-  const gaT  = hasJongT ? '이' : '가';
-  const eunT = hasJongT ? '은' : '는';
-  const waT  = hasJongT ? '과' : '와';
+  const gaT = hasJongT ? '이' : '가';
+  const waT = hasJongT ? '과' : '와';
 
-  const treeObservations = (() => {
-    if (days === 1) return [
-      `${treeName}${gaT} 오늘 처음 세상에 나왔어요`,
-      `${nickname}님과 ${treeName}의 첫 번째 날이에요`,
-      `작은 시작이 이루어지고 있어요`
-    ];
-    if (days <= 3) return [
-      `${treeName}${gaT} 이제 막 시작됐어요`,
-      `${nickname}님과 ${treeName}, 아직 초반이에요`,
-      `작은 싹이 자리를 잡고 있어요`,
-      `첫 며칠, 소중한 시간이에요`
-    ];
-    if (days <= 7) return [
-      `벌써 ${days}일째 함께하고 있어요`,
-      `${treeName}${gaT} 조금씩 달라지고 있어요`,
-      `${nickname}님이 올 때마다 조금씩 자라요`,
-      `일주일이 되어가고 있네요`,
-      `매일 오는 사람만 아는 변화가 있어요`
-    ];
-    if (days <= 14) return [
-      `${treeName}${gaT} 제법 자리를 잡아가고 있어요`,
-      `${days}일 동안 꾸준히 함께했네요`,
-      `${nickname}님 덕분에 조금씩 자라고 있어요`,
-      `어제보다 오늘, 조금 더 자란 것 같아요`,
-      `두 주가 되어가고 있어요`
-    ];
-    if (days <= 30) return [
-      `${days}일이 쌓이고 있어요`,
-      `${treeName}${gaT} 눈에 띄게 자라고 있어요`,
-      `꾸준히 오는 게 쉬운 일이 아닌데, 대단해요`,
-      `${nickname}님${waT} ${treeName}, 제법 오래된 사이예요`,
-      `아무도 모르게, 조금씩 자라고 있어요`
-    ];
-    return [
-      `${days}일째, 오랜 사이가 됐네요`,
-      `${nickname}님${waT} ${treeName}, 긴 시간을 함께했어요`,
-      `이 정도면 정말 특별한 관계예요`,
-      `오래 함께한 것들은 달라요`,
-      `${days}일의 시간이 나무에 담겨 있어요`
-    ];
+  // ── 날씨 두 번째 줄 멘트 ──
+  const weatherLine = {
+    0: ['맑은 날씨가 기분까지 맑게 해줘요 ☀️', '햇살이 좋은 날이에요, 잠깐 환기시켜 보세요 🌞', '오늘 날씨가 참 예쁘네요 ☀️'],
+    1: ['흐린 날엔 따뜻한 음료 한 잔 어때요 ☁️', '구름이 많지만 그것도 나름 운치 있어요 🌥', '오늘은 좀 흐리네요, 그래도 괜찮아요 ☁️'],
+    2: ['비가 오고 있어요, 우산 챙기셨나요? 🌧', '빗소리 들으며 잠깐 쉬어가요 🌧', '비 오는 날엔 실내가 제일이에요 ☔', '오늘 비가 꽤 오네요, 감기 조심하세요 🌧'],
+    3: ['눈이 내리고 있어요, 따뜻하게 입으세요 ❄️', '눈 오는 날엔 마음도 포근해지죠 ⛄', '오늘 눈이 왔네요, 미끄럼 조심하세요 ❄️']
+  };
+
+  // ── 식사 시간대 멘트 (식사 시간 전후 1시간) ──
+  const mealLine = (() => {
+    if (h >= 6 && h <= 8)   return ['아침 식사는 하셨나요? 든든하게 드세요 🍚', '오늘 아침밥은 챙겨 드셨어요? 🥣', '아침을 먹어야 하루가 든든해요 🍳'];
+    if (h >= 11 && h <= 13) return ['점심 식사 하셨나요? 맛있는 거 드세요 🍱', '점심시간이에요, 잘 챙겨 드셨으면 해요 🥗', '오늘 점심은 뭐 드셨어요? 🍜'];
+    if (h >= 17 && h <= 19) return ['저녁 식사는 하셨나요? 🍚', '저녁 시간이에요, 따뜻하게 드세요 🍲', '오늘 저녁밥은 챙겨 드셨어요? 🥘'];
+    return null;
   })();
 
-  // 기념일이면 편지 힌트 멘트 우선 반환
+  // ── 나무 관찰 첫 번째 줄 ──
+  const treeObsLine = (() => {
+    if (days === 1) return [`${treeName}${gaT} 오늘 처음 세상에 나왔어요`, `${nickname}님과의 첫 번째 날이에요`];
+    if (days <= 3)  return [`작은 싹이 자리를 잡고 있어요`, `${treeName}${gaT} 이제 막 시작됐어요`];
+    if (days <= 7)  return [`벌써 ${days}일째 함께하고 있어요`, `매일 오는 사람만 아는 변화가 있어요`, `${treeName}${gaT} 조금씩 달라지고 있어요`];
+    if (days <= 14) return [`${days}일 동안 꾸준히 함께했네요`, `${treeName}${gaT} 제법 자리를 잡아가고 있어요`, `어제보다 오늘, 조금 더 자란 것 같아요`];
+    if (days <= 30) return [`${days}일이 쌓이고 있어요`, `꾸준히 오는 게 쉬운 일이 아닌데, 대단해요`, `${nickname}님${waT} ${treeName}, 제법 오래된 사이예요`];
+    return [`${days}일째, 오랜 사이가 됐네요`, `이 정도면 정말 특별한 관계예요`, `${days}일의 시간이 나무에 담겨 있어요`];
+  })();
+
+  // ── 시간 인사 첫 번째 줄 ──
+  const timeGreetings = {
+    pine: {
+      새벽: [`이 새벽에도 오셨군요, ${nickname}님`, `고요한 새벽, 잘 오셨어요`],
+      아침: [`좋은 아침이에요, ${nickname}님`, `아침 일찍 오셨군요, ${nickname}님`],
+      오전: [`오전에 들러주셨군요, ${nickname}님`, `오늘도 오셨군요, ${nickname}님`],
+      낮:   [`낮에 들러주셨군요, ${nickname}님`, `오늘도 오셨네요, ${nickname}님`],
+      저녁: [`저녁에 오셨네요, ${nickname}님`, `오늘 하루 수고하셨어요, ${nickname}님`],
+      밤:   [`늦게까지 수고하셨어요, ${nickname}님`, `밤에도 와주셨군요, ${nickname}님`]
+    },
+    cherry: {
+      새벽: [`이른 새벽에 와주셨네요, ${nickname}님`, `새벽에도 생각해주셨어요`],
+      아침: [`좋은 아침이에요, ${nickname}님 🌸`, `아침부터 와주셨군요, ${nickname}님`],
+      오전: [`오전에 와주셨군요, ${nickname}님`, `오전 시간에 들러주셨네요`],
+      낮:   [`안녕하세요, ${nickname}님`, `낮에 와주셨군요, ${nickname}님`],
+      저녁: [`저녁에 와주셨군요, ${nickname}님`, `하루 마무리에 와주셨어요`],
+      밤:   [`밤에도 생각해주셨어요, ${nickname}님`, `오늘 마지막으로 들러주셨네요`]
+    },
+    orange: {
+      새벽: [`새벽부터 오셨어요?! ${nickname}님`, `이 새벽에도 대단해요, ${nickname}님`],
+      아침: [`굿모닝이에요! ${nickname}님 🍊`, `아침부터 파이팅이에요, ${nickname}님`],
+      오전: [`오전부터 오셨군요! ${nickname}님`, `좋은 오전이에요! ${nickname}님`],
+      낮:   [`안녕하세요! ${nickname}님`, `낮에도 열심히죠? ${nickname}님`],
+      저녁: [`저녁이네요, ${nickname}님`, `오늘 하루도 수고하셨어요! ${nickname}님`],
+      밤:   [`늦은 밤까지 파이팅이에요, ${nickname}님`, `밤에도 대단해요, ${nickname}님`]
+    }
+  };
+
+  // 기념일 편지 힌트 우선
   if (ANNIVERSARY_DAYS.includes(days) && !state[`letterSeen_${days}`]) {
     const hints = {
-      pine:   [`저기, 편지가 온 것 같아요`, `왼쪽에 뭔가 날아왔어요`, `오늘 특별한 날인 것 같아요`],
-      cherry: [`편지가 왔나봐요. 터치해보세요`, `왼쪽에 반짝이는 게 있어요`, `오늘 ${treeName}${gaT} 편지를 썼어요`],
-      orange: [`어머, 편지예요! 터치해보세요!`, `왼쪽에 뭔가 왔어요, 빨리 봐요!`, `오늘 특별한 날이에요, ${nickname}님!`]
+      pine:   [`저기, 편지가 온 것 같아요`, `왼쪽에 뭔가 날아왔어요`],
+      cherry: [`편지가 왔나봐요. 터치해보세요`, `오늘 ${treeName}${gaT} 편지를 썼어요`],
+      orange: [`어머, 편지예요! 터치해보세요!`, `오늘 특별한 날이에요, ${nickname}님!`]
     };
     const pool = hints[treeType] || hints.cherry;
+    // 편지 힌트는 1줄만 (강조)
     return pool[seededRand(seed + 99, pool.length)];
   }
 
-  // 날짜 seed로 오늘 유형 결정 (50% 시간 인사 / 50% 나무 관찰)
-  const useTime = seededRand(seed + 77, 2) === 0;
-
-  if (useTime) {
+  // ── 첫 번째 줄 결정: 33% 시간인사 / 33% 나무관찰 / 34% 날씨
+  const roll = seededRand(seed + 77, 3);
+  let line1;
+  if (roll === 0) {
     const t = h < 6 ? '새벽' : h < 9 ? '아침' : h < 12 ? '오전' : h < 18 ? '낮' : h < 21 ? '저녁' : '밤';
     const pool = (timeGreetings[treeType] || timeGreetings.pine)[t];
-    return pool[seededRand(seed + 11, pool.length)];
+    line1 = pool[seededRand(seed + 11, pool.length)];
+  } else if (roll === 1) {
+    line1 = treeObsLine[seededRand(seed + 13, treeObsLine.length)];
   } else {
-    return treeObservations[seededRand(seed + 13, treeObservations.length)];
+    // 날씨 멘트를 첫 줄로
+    const pool = weatherLine[wc] || weatherLine[0];
+    line1 = pool[seededRand(seed + 23, pool.length)];
   }
+
+  // ── 두 번째 줄 결정: 식사시간이면 식사질문, 아니면 날씨 or 나무관찰
+  let line2;
+  if (mealLine && seededRand(seed + 55, 2) === 0) {
+    // 식사 시간대면 70% 확률로 식사 질문
+    line2 = mealLine[seededRand(seed + 57, mealLine.length)];
+  } else if (roll !== 2) {
+    // 첫 줄이 날씨가 아니었으면 두 번째 줄에 날씨
+    const pool = weatherLine[wc] || weatherLine[0];
+    line2 = pool[seededRand(seed + 33, pool.length)];
+  } else {
+    // 첫 줄이 날씨였으면 두 번째 줄에 나무관찰
+    line2 = treeObsLine[seededRand(seed + 43, treeObsLine.length)];
+  }
+
+  // 두 줄이 같으면 나무관찰로 대체
+  if (line1 === line2) {
+    line2 = treeObsLine[seededRand(seed + 91, treeObsLine.length)];
+  }
+
+  return `${line1}\n${line2}`;
 }
 
 // 날씨+시간+단계 조합으로 오늘의 한 마디 (짧게, 높임말)
@@ -3802,7 +5263,7 @@ function getTodayMessage(treeType, nickname, treeName, days, stage) {
       1: [`좋은 아침이에요, ${nickname}님! 🌸`, `오늘 하루도\n같이 힘내봐요!`],
       2: [`오전에 와줬군요 🌸\n오늘도 잘 될 거예요.`, `오전 햇살처럼\n따뜻한 하루예요 🌸`],
       3: [`점심은 드셨어요? 🌷`, `낮에 왔군요.\n오늘 어떠세요?`],
-      4: [`저녁이에요, ${nickname}님.\n오늘 수고하셨어요 🌸`, `저녁노을 예쁘죠?\n${nickname}님처럼요.`],
+      4: [`저녁이에요, ${nickname}님.\n오늘 수고하셨어요 🌸`, weatherCode === 0 ? `저녁노을 예쁘죠?\n${nickname}님처럼요.` : `저녁이 왔네요.\n${nickname}님, 오늘 어땠어요? 🌸`],
       5: [`늦게까지 깨어 계셨군요.\n이제 쉬어요 🌸`, `밤에도 와줬어요.\n고마워요, ${nickname}님.`]
     },
     orange: {
@@ -4956,21 +6417,25 @@ function closeLetterModal() {
   document.getElementById('letter-modal-overlay').classList.remove('open');
   // 편지를 읽고 돌아오면 기념일 축하 멘트로 교체
   if (state && ANNIVERSARY_DAYS.includes(state.days)) {
+    const wc = weatherCode;
+    const weatherSuffix = [
+      '햇살이 따뜻한 날이에요 ☀️', '구름이 많지만 괜찮아요 ☁️', '비가 오는 날이에요 🌧', '눈이 내리네요 ❄️'
+    ][wc] || '오늘도 좋은 하루예요';
     const milestoneGreetings = {
       pine: [
-        `벌써 ${state.days}일이 됐나봐요. 저도 기뻐요`,
-        `${state.days}번째 날이라니, 참 오래됐네요`,
-        `${state.days}일 함께했군요. 소중한 시간이에요`
+        `벌써 ${state.days}일이 됐나봐요. 저도 기뻐요\n${weatherSuffix}`,
+        `${state.days}번째 날이라니, 참 오래됐네요\n${weatherSuffix}`,
+        `${state.days}일 함께했군요. 소중한 시간이에요\n${weatherSuffix}`
       ],
       cherry: [
-        `어머, 벌써 ${state.days}일이에요! 저도 설레요`,
-        `${state.days}번째 날이라니, 정말 대단해요`,
-        `${state.days}일이 됐군요. 저도 괜히 기쁘네요`
+        `어머, 벌써 ${state.days}일이에요! 저도 설레요\n${weatherSuffix}`,
+        `${state.days}번째 날이라니, 정말 대단해요\n${weatherSuffix}`,
+        `${state.days}일이 됐군요. 저도 괜히 기쁘네요\n${weatherSuffix}`
       ],
       orange: [
-        `와, 벌써 ${state.days}일이에요! 대단한걸요!`,
-        `${state.days}번째 날! 저도 신나요!`,
-        `${state.days}일이라니, 정말 잘 해냈어요!`
+        `와, 벌써 ${state.days}일이에요! 대단한걸요!\n${weatherSuffix}`,
+        `${state.days}번째 날! 저도 신나요!\n${weatherSuffix}`,
+        `${state.days}일이라니, 정말 잘 해냈어요!\n${weatherSuffix}`
       ]
     };
     const pool = milestoneGreetings[state.treeType] || milestoneGreetings.pine;
@@ -5001,6 +6466,9 @@ function confirmDonation() {
 }
 
 function openModal() {
+  // 모달 열리면 idle 타이머 정지
+  clearTimeout(_idleTimer1);
+  clearTimeout(_idleTimer2);
   const tName = state.treeName || '나무';
   const lastChar = tName[tName.length - 1];
   const code = lastChar.charCodeAt(0);
@@ -5036,6 +6504,59 @@ function closeSettingsModal() {
   openModal();
 }
 
+function openQuitConfirm() {
+  const name = (state && state.treeName) || '나무';
+  const nick = (state && state.nickname) || '주인님';
+  const type = (state && state.treeType) || 'pine';
+  const msgs = {
+    pine:   `${name}을(를) 잘 돌봐주셨어요.\n오늘 할 일은 다 마쳤어요.\n이제 앱을 닫아도 괜찮아요.\n${nick}님, 수고하셨어요. 🌲`,
+    cherry: `오늘도 잘 돌봐줘서 고마워요!\n할 일은 다 했으니 이제 쉬어요.\n앱 닫고 오늘 하루도 수고해요!\n${nick}님 또 와요 🌸`,
+    orange: `오늘 할 거 다 했어요!! 🍊\n이제 앱 닫고 일상으로 고고!!\n${nick}님 오늘도 최고였어요!! ⚡`
+  };
+  document.getElementById('quit-confirm-msg').textContent = msgs[type] || msgs.pine;
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('quit-overlay').classList.add('open');
+}
+
+function closeQuitConfirm() {
+  document.getElementById('quit-overlay').classList.remove('open');
+  document.getElementById('settings-overlay').classList.add('open');
+}
+
+function confirmQuit() {
+  saveState();
+  document.getElementById('quit-overlay').classList.remove('open');
+  showToast('또 와요 🌿');
+}
+
+function saveNickname() {
+  const newNick = document.getElementById('settings-nickname-input').value.trim();
+  if (!newNick) { showToast('별칭을 입력해주세요 🙂'); return; }
+  state.nickname = newNick;
+  saveState();
+  const hudName = document.getElementById('hud-name');
+  if (hudName) hudName.textContent = `${newNick}님의 ${state.treeName}`;
+  const stage = getStage(state.days);
+  renderSpeechBubble(newNick, state.treeName, state.days, state.treeType, stage);
+  showToast('별칭이 저장됐어요 🙂');
+}
+
+function saveTreeName() {
+  const newTree = document.getElementById('settings-treename-input').value.trim();
+  if (!newTree) { showToast('나무 이름을 입력해주세요 🌿'); return; }
+  state.treeName = newTree;
+  saveState();
+  const hudName = document.getElementById('hud-name');
+  if (hudName) hudName.textContent = `${state.nickname}님의 ${newTree}`;
+  const treeDayLabel = document.getElementById('tree-day-btn-label');
+  if (treeDayLabel) treeDayLabel.textContent = newTree + '의 하루';
+  const treeDayTitle = document.getElementById('tree-day-title');
+  if (treeDayTitle) treeDayTitle.textContent = newTree + '의 하루';
+  const stage = getStage(state.days);
+  renderSpeechBubble(state.nickname, newTree, state.days, state.treeType, stage);
+  showToast('나무 이름이 저장됐어요 🌿');
+}
+
 function saveSettings() {
   const newNick = document.getElementById('settings-nickname-input').value.trim();
   const newTree = document.getElementById('settings-treename-input').value.trim();
@@ -5059,6 +6580,8 @@ function saveSettings() {
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
+  // 모달 닫히면 idle 타이머 재시작
+  resetIdleTimer();
 
   // 방문 나무: 다음날이면 제거
   const today = getLocalDateStr();
@@ -5091,6 +6614,11 @@ const CARE_ACTIONS = {
     icon: '💧', label: '물 주기',
     doneText: (n) => `오늘 물을 줬어요 💧`,
     todoText: '오늘 아직 안 줬어요',
+    popupMsg: {
+      pine:   (n, t) => `물을 충분히 잘 주었어요~! 💧\n${t}가 시원해하는 것 같아요. 🌿`,
+      cherry: (n, t) => `물을 듬뿍 주었어요~! 💧\n${t}가 기뻐하고 있어요 🌸`,
+      orange: (n, t) => `물 주기 완료~! 💧🍊\n${t}가 힘차게 자랄 거예요!`
+    },
     bubble: {
       pine:   (n) => `고마워요, ${n}님.\n시원하네요. 🌿`,
       cherry: (n) => `앗, 시원해요! 💧\n고마워요, ${n}님 🌸`,
@@ -5101,6 +6629,11 @@ const CARE_ACTIONS = {
     icon: '☀️', label: '햇빛 쬐어주기',
     doneText: (n) => `오늘 햇빛을 받았어요 ☀️`,
     todoText: '오늘 아직 못 받았어요',
+    popupMsg: {
+      pine:   (n, t) => `햇빛을 듬뿍 쬐어 주었어요~! ☀️\n${t}가 따뜻해하고 있어요. 🌿`,
+      cherry: (n, t) => `햇살 샤워 완료~! ☀️\n${t}가 환하게 웃는 것 같아요 🌸`,
+      orange: (n, t) => `햇빛 충전 완료~! ☀️🍊\n${t}에게 에너지가 가득 찼어요!`
+    },
     bubble: {
       pine:   (n) => `따뜻하네요, ${n}님.\n햇살이 좋아요. 🌿`,
       cherry: (n) => `햇빛이 너무 좋아요! ☀️\n고마워요, ${n}님 🌸`,
@@ -5111,6 +6644,11 @@ const CARE_ACTIONS = {
     icon: '✂️', label: '잎 다듬기',
     doneText: (n) => `오늘 잎을 다듬었어요 ✂️`,
     todoText: '오늘 아직 안 다듬었어요',
+    popupMsg: {
+      pine:   (n, t) => `잎을 곱게 다듬어 주었어요~! ✂️\n${t}가 더 단정해진 것 같아요. 🌿`,
+      cherry: (n, t) => `잎 다듬기 완료~! ✂️\n${t}가 한결 예뻐졌어요 🌸`,
+      orange: (n, t) => `깔끔하게 다듬었어요~! ✂️🍊\n${t}가 멋있어졌다고 기뻐해요!`
+    },
     bubble: {
       pine:   (n) => `단정해진 것 같아요, ${n}님.\n고마워요. 🌿`,
       cherry: (n) => `깔끔해졌어요! ✂️\n${n}님 손길이 느껴져요 🌸`,
@@ -5121,6 +6659,11 @@ const CARE_ACTIONS = {
     icon: '🌱', label: '잡초 치워주기',
     doneText: (n) => `오늘 주변을 깨끗이 했어요 🌱`,
     todoText: '오늘 아직 안 치웠어요',
+    popupMsg: {
+      pine:   (n, t) => `잡초를 깨끗하게 치워 주었어요~! 🌱\n${t}가 더 잘 숨쉴 수 있을 것 같아요. 🌿`,
+      cherry: (n, t) => `주변 정리 완료~! 🌱\n${t}가 시원해하는 것 같아요 🌸`,
+      orange: (n, t) => `잡초 제거 성공~! 🌱🍊\n${t} 주변이 넓어져서 신나요!`
+    },
     bubble: {
       pine:   (n) => `훨씬 숨쉬기 편해요, ${n}님.\n고마워요. 🌿`,
       cherry: (n) => `주변이 깨끗해졌어요! 🌱\n${n}님 덕분이에요 🌸`,
@@ -5171,6 +6714,17 @@ function updateCareBtn() {
   }
 }
 
+function showCarePopup(icon, msg) {
+  const overlay = document.getElementById('care-popup-overlay');
+  const iconEl  = document.getElementById('care-popup-icon');
+  const msgEl   = document.getElementById('care-popup-msg');
+  if (!overlay) return;
+  iconEl.textContent = icon;
+  msgEl.textContent  = msg;
+  overlay.classList.add('show');
+  setTimeout(() => overlay.classList.remove('show'), 2200);
+}
+
 function doCare() {
   const today = getLocalDateStr();
   if (state.caredDate === today) {
@@ -5195,26 +6749,92 @@ function doCare() {
     state.bond = Math.min(100, state.bond + 3);
     saveState();
   }
+
+  // 완료 팝업
+  const type   = getTodayCareType();
+  const action = CARE_ACTIONS[type];
+  const tType  = state.treeType || 'pine';
+  const nick   = state.nickname || '주인님';
+  const tName  = state.treeName || '나무';
+  const msg    = action.popupMsg[tType]
+    ? action.popupMsg[tType](nick, tName)
+    : action.doneText(nick);
+  showCarePopup(action.icon, msg);
+  // 나무 감사 말풍선 (bubble 메시지 따로 존재하면 그걸로, 아니면 팝업 메시지)
+  const bubbleMsg = (action.bubble && action.bubble[tType])
+    ? action.bubble[tType](nick)
+    : msg;
+  showBubbleWithFade(bubbleMsg, 8000);
 }
 
-/* ── 일기 ── */
-function saveDiary() {
-  const input = document.getElementById('diary-input');
+/* ── 일기 등록 반응 문구 ── */
+const DIARY_MSGS_HAPPY = [
+  n => `${n}님, 오늘 좋은 일이 있었네요. 잘 됐네요~ 😊`,
+  n => `${n}님, 그런 일이 있었군요. 기분 좋은 하루였겠어요 🌟`,
+  n => `오, ${n}님한테 그런 일이! 정말 다행이네요 🍀`,
+  n => `${n}님, 오늘 꽤 괜찮은 하루였겠어요. 좋았겠다~ ✨`,
+  n => `${n}님 얘기 들으니 저도 기분 좋아지네요 😄`,
+  n => `그런 좋은 일이 있었군요, ${n}님. 앞으로도 이런 날이 많아야 할 텐데요 🌈`,
+  n => `${n}님, 오늘 참 잘 됐네요. 소소하지만 기억에 남을 것 같아요 💛`,
+  n => `${n}님한테도 이런 날이 오는군요~ 좋은 일은 계속됐으면 해요 🌻`,
+  n => `오늘 그런 일이 있었다니, ${n}님 운이 좋았네요! 😌`,
+  n => `${n}님, 좋은 일 생겼을 때 꼭 남겨두길 잘했어요. 나중에 봐도 기분 좋을 거예요 📖`,
+];
+const DIARY_MSGS_SAD = [
+  n => `${n}님, 오늘 그런 일이 있었네요. 괜찮아요? 😟`,
+  n => `${n}님, 많이 힘들었겠어요. 그래도 여기 남겨줘서 고마워요 🤍`,
+  n => `오늘 그랬군요, ${n}님. 이런 날도 있는 거지요, 뭐... 🌧`,
+  n => `${n}님, 쉽지 않은 하루였겠어요. 잘 버텼어요 💪`,
+  n => `그런 일이 있었군요, ${n}님. 많이 속상했을 것 같아요 😔`,
+  n => `${n}님, 오늘 마음이 많이 무거웠겠네요. 좀 쉬어요 🌙`,
+  n => `${n}님한테 그런 일이 생겼군요. 억울한 마음도 들었겠다 싶어요 🌿`,
+  n => `오늘 하루 참 고생했겠어요, ${n}님. 내일은 좀 나아지길 바라요 🌱`,
+  n => `${n}님, 그 마음 충분히 이해가 가요. 어떻게 좀 됐으면 좋겠네요 😶`,
+  n => `힘든 날 꼭 남겨두길 잘했어요, ${n}님. 지나고 보면 이런 날도 있었구나 싶을 거예요 📖`,
+];
+
+function saveDiary(emotion) {
+  const inputId = emotion === 'happy' ? 'diary-input-happy' : 'diary-input-sad';
+  const input = document.getElementById(inputId);
   const text = input.value.trim();
   if (!text) { showToast('한 마디를 입력해주세요 ✏️'); return; }
 
   const today = getLocalDateStr();
   if (!state.diaries) state.diaries = {};
-  state.diaries[today] = text;
 
-  // 최근 60일치만 보관
-  const keys = Object.keys(state.diaries).sort();
-  if (keys.length > 60) delete state.diaries[keys[0]];
+  if (!state.diaries[today]) state.diaries[today] = [];
+  if (typeof state.diaries[today] === 'string') {
+    state.diaries[today] = [{ text: state.diaries[today], emotion: 'happy' }];
+  }
+  state.diaries[today].push({ text, emotion });
 
   saveState();
   input.value = '';
   loadDiaryPrev();
-  showToast('오늘의 한마디를 남겼어요 📝');
+
+  // 별칭 가져오기
+  const nick = (state.nickname && state.nickname.trim()) || '저기요';
+  const msgs = emotion === 'happy' ? DIARY_MSGS_HAPPY : DIARY_MSGS_SAD;
+  const msg = msgs[Math.floor(Math.random() * msgs.length)](nick);
+  showToast(msg, 4000, emotion);
+}
+
+function deleteDiaryEntry(dateKey, idx) {
+  if (!state.diaries || !state.diaries[dateKey]) return;
+  let entries = state.diaries[dateKey];
+  if (typeof entries === 'string') entries = [{ text: entries, emotion: 'happy' }];
+  entries.splice(idx, 1);
+  if (entries.length === 0) {
+    delete state.diaries[dateKey];
+  } else {
+    state.diaries[dateKey] = entries;
+  }
+  saveState();
+  loadDiaryPrev();
+  // 전체보기가 열려 있으면 새로고침
+  const allOverlay = document.getElementById('diary-all-overlay');
+  if (allOverlay && allOverlay.classList.contains('open')) openDiaryAll();
+  showToast('삭제했어요 🗑️');
 }
 
 function loadDiaryPrev() {
@@ -5225,18 +6845,23 @@ function loadDiaryPrev() {
   const keys = Object.keys(state.diaries).sort().reverse();
   if (!keys.length) { wrap.style.display='none'; moreBtn.style.display='none'; return; }
 
-  // 최근 5개까지 표시
   const show = keys.slice(0, 5);
   wrap.innerHTML = show.map(k => {
     const label = k === today ? '오늘' : k;
-    return `<div class="diary-prev-item">
-      <div class="diary-prev-date">${label}</div>
-      <div>${state.diaries[k]}</div>
-    </div>`;
+    let entries = state.diaries[k];
+    if (typeof entries === 'string') entries = [{ text: entries, emotion: 'happy' }];
+    const entriesHtml = entries.map((e, i) => {
+      const cls = e.emotion === 'sad' ? 'diary-text-sad' : 'diary-text-happy';
+      const icon = e.emotion === 'sad' ? '😢' : '😊';
+      return `<div class="diary-prev-item">
+        <span class="${cls}">${icon} ${e.text}</span>
+        <button class="diary-del-btn" onclick="deleteDiaryEntry('${k}',${i})" title="삭제">×</button>
+      </div>`;
+    }).join('');
+    return `<div class="diary-prev-date">${label}</div>${entriesHtml}`;
   }).join('<hr class="diary-divider">');
   wrap.style.display = 'block';
 
-  // 6개 이상이면 더 보기 버튼 표시
   moreBtn.style.display = keys.length > 5 ? 'block' : 'none';
 }
 
@@ -5247,12 +6872,133 @@ function openDiaryAll() {
   const list = document.getElementById('diary-all-list');
   list.innerHTML = keys.map(k => {
     const label = k === today ? '오늘' : k;
-    return `<div class="diary-all-item">
-      <div class="diary-all-date">${label}</div>
-      <div class="diary-all-text">${state.diaries[k]}</div>
-    </div>`;
+    let entries = state.diaries[k];
+    if (typeof entries === 'string') entries = [{ text: entries, emotion: 'happy' }];
+    return entries.map((e, i) => {
+      const cls = e.emotion === 'sad' ? 'sad' : 'happy';
+      const textCls = e.emotion === 'sad' ? 'diary-text-sad' : 'diary-text-happy';
+      const icon = e.emotion === 'sad' ? '😢' : '😊';
+      return `<div class="diary-all-item ${cls}">
+        <div class="diary-all-date">${label}</div>
+        <div class="diary-all-text ${textCls}">${icon} ${e.text}</div>
+        <button class="diary-all-del-btn" onclick="deleteDiaryEntry('${k}',${i})" title="삭제">×</button>
+      </div>`;
+    }).join('');
   }).join('');
   document.getElementById('diary-all-overlay').classList.add('open');
+}
+
+/* ── 추억 갤러리 ── */
+const GALLERY_MILESTONES = [1, 10, 20, 30, 40, 50, 60];
+
+function galleryKey(days) { return `gallery_snapshot_${state.bornDate || 'x'}_d${days}`; }
+
+function hasSnapshot(days) {
+  return !!localStorage.getItem(galleryKey(days));
+}
+
+function saveSnapshot(days, dataUrl) {
+  try {
+    localStorage.setItem(galleryKey(days), dataUrl);
+  } catch(e) {
+    // 용량 초과 시 무시
+    console.warn('갤러리 저장 실패(용량):', e);
+  }
+}
+
+// 오늘 이미 캡처했는지 체크 (중복 방지)
+function didCaptureToday(days) {
+  return localStorage.getItem(`gallery_captured_${galleryKey(days)}`) === '1';
+}
+function markCapturedToday(days) {
+  localStorage.setItem(`gallery_captured_${galleryKey(days)}`, '1');
+}
+
+async function tryAutoCapture() {
+  const days = state.days;
+  if (!GALLERY_MILESTONES.includes(days)) return;
+  if (hasSnapshot(days)) return;           // 이미 저장됨
+  if (didCaptureToday(days)) return;       // 오늘 이미 시도함
+
+  // 렌더가 완전히 끝난 후 캡처 (3초 여유)
+  setTimeout(async () => {
+    const page4 = document.getElementById('page4');
+    if (!page4) return;
+    try {
+      const canvas = await html2canvas(page4, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 1.5,          // 고화질 (기존 0.6 → 1.5)
+        logging: false,
+        backgroundColor: null,
+      });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      saveSnapshot(days, dataUrl);
+      markCapturedToday(days);
+      showToast(`${days}일차 추억 사진이 갤러리에 저장됐어요 📸`, 3000);
+    } catch(e) {
+      console.warn('캡처 실패:', e);
+    }
+  }, 3000);
+}
+
+function openGallery() {
+  const grid = document.getElementById('gallery-grid-inner');
+  const captured = GALLERY_MILESTONES.filter(d => hasSnapshot(d));
+
+  if (captured.length === 0) {
+    grid.innerHTML = `<div class="gallery-empty">
+      아직 저장된 추억이 없어요.<br>
+      1일, 10일, 20일… 기념일에<br>자동으로 사진이 찍혀요 🌱
+    </div>`;
+  } else {
+    grid.innerHTML = captured.map(d => {
+      const img = localStorage.getItem(galleryKey(d));
+      const label = d === 1 ? '1일차 🌱' : `${d}일차 🌳`;
+      const memo = localStorage.getItem(galleryKey(d) + '_memo') || '';
+      const memoHtml = memo
+        ? `<div class="gallery-item-memo">"${memo}"</div>`
+        : '';
+      return `<div class="gallery-item" onclick="openPhotoDetail(${d})">
+        <img src="${img}" alt="${label}">
+        <div class="gallery-item-label">${label}</div>
+        ${memoHtml}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('gallery-overlay').classList.add('open');
+}
+
+function closeGallery() {
+  document.getElementById('gallery-overlay').classList.remove('open');
+}
+
+let _photoDetailDays = null;
+
+function openPhotoDetail(days) {
+  _photoDetailDays = days;
+  const img = localStorage.getItem(galleryKey(days));
+  const label = days === 1 ? '1일차 🌱' : `${days}일차 🌳`;
+  const memo = localStorage.getItem(galleryKey(days) + '_memo') || '';
+
+  document.getElementById('photo-detail-label').textContent = label;
+  document.getElementById('photo-detail-img').src = img;
+  document.getElementById('photo-memo-input').value = memo;
+  document.getElementById('photo-detail-overlay').classList.add('open');
+}
+
+function closePhotoDetail() {
+  document.getElementById('photo-detail-overlay').classList.remove('open');
+  _photoDetailDays = null;
+}
+
+function savePhotoMemo() {
+  if (_photoDetailDays === null) return;
+  const memo = document.getElementById('photo-memo-input').value.trim();
+  localStorage.setItem(galleryKey(_photoDetailDays) + '_memo', memo);
+  closePhotoDetail();
+  openGallery(); // 갤러리 새로고침
+  showToast('기록이 저장됐어요 📝', 2200);
 }
 
 function closeDiaryAll() {
@@ -5532,6 +7278,10 @@ function updateKnockBtnPos() {
 function initMainGame() {
   currentHour = new Date().getHours();
 
+  // inline style 제거 → CSS 기본값(left:55%) 적용
+  const _tsInit = document.getElementById('tree-stage');
+  if (_tsInit) _tsInit.style.left = '';
+
   // 방문 기록 (visitLog) — 오늘 날짜 추가
   if (!state.visitLog) state.visitLog = [];
   const todayStr = getLocalDateStr();
@@ -5541,6 +7291,12 @@ function initMainGame() {
     if (state.visitLog.length > 365) state.visitLog.shift();
     saveState();
   }
+
+  // 나무의 하루 버튼 텍스트
+  const _btnLabel = document.getElementById('tree-day-btn-label');
+  const _btnSub   = document.getElementById('tree-day-btn-sub');
+  if (_btnLabel) _btnLabel.textContent = (state.nickname || '주인님') + '님, 보세요';
+  if (_btnSub)   _btnSub.textContent   = '오늘 ' + (state.treeName || '나무') + '가 전하는 이야기';
 
   // HUD
   document.getElementById('hud-born').textContent = `탄생: ${state.bornDate}`;
@@ -5570,6 +7326,102 @@ function initMainGame() {
   // 날씨 확정 전 즉시 렌더 (날씨 로드 후 updateWeatherEffects에서 재렌더)
   renderSpeechBubble(state.nickname, state.treeName, state.days, state.treeType, stage);
 
+  // ── 하루 첫 방문 인사 말풍선
+  const _greetKey = '_greetShownDate';
+  const _greetShownDate = localStorage.getItem(_greetKey);
+  if (_greetShownDate !== todayStr) {
+    localStorage.setItem(_greetKey, todayStr);
+
+    const nick = state.nickname || '주인님';
+    const tName = state.treeName || '나무';
+    const type = state.treeType || 'pine';
+
+    // 마지막 방문일 계산
+    const vLog = state.visitLog || [];
+    let daysSinceLast = 999;
+    if (vLog.length >= 2) {
+      const prev = vLog[vLog.length - 2]; // 오늘 바로 전 방문일
+      const prevDate = new Date(prev);
+      const todayDate = new Date(todayStr);
+      daysSinceLast = Math.round((todayDate - prevDate) / (1000 * 60 * 60 * 24));
+    } else {
+      daysSinceLast = 0; // 오늘이 첫 방문
+    }
+
+    // 상황별 멘트 풀 (나무 성격별 × 상황별 3종)
+    const greetMsgs = {
+      pine: {
+        // 연속 방문 (1일)
+        streak: [
+          `${nick}님, 오늘도 잊지 않고 오셨네요.\n고마워요.\n오실 때마다 ${tName}은 뿌리가 깊어져요. 🌲`,
+          `${nick}님, 어제에 이어 오늘도 오셨군요.\n${tName}은 그걸 다 기억하고 있어요. 🌲`,
+          `어제도 오셨는데 오늘도 오셨네요.\n${nick}님 덕분에 ${tName}이 든든해요. 🌲`,
+        ],
+        // 2~3일 만에 방문
+        short: [
+          `${nick}님, 와주셔서 너무 좋아요.\n오늘도 좋은 날 되어요.\n${tName}도 더욱 클게요. 🌲`,
+          `며칠 만이에요, ${nick}님.\n기다리고 있었어요.\n${tName}도 반갑대요. 🌲`,
+          `${nick}님, 오셨군요.\n잠깐이라도 와주셔서 좋아요.\n${tName}이 힘이 납니다. 🌲`,
+        ],
+        // 3일 이상 만에 방문
+        long: [
+          `${nick}님, 오랜만이에요.\n자주 와주세요.\n자주 와야 ${tName}이 쑥쑥 자라요. 🌲`,
+          `많이 기다렸어요, ${nick}님.\n${tName}도 보고 싶어 했어요.\n앞으로 자주 와줘요. 🌲`,
+          `${nick}님, 오셨네요.\n${tName}은 항상 여기 있을게요.\n가끔이라도 찾아와 줘요. 🌲`,
+        ],
+      },
+      cherry: {
+        streak: [
+          `${nick}님, 오늘도 잊지 않고 또 오셨어요! 🌸\n고마워요~\n올 때마다 ${tName}이 더 예뻐진답니다 💕`,
+          `어제에 이어 오늘도 오셨네요, ${nick}님! 🌸\n${tName}이 기억하고 있어요, 다 기억해요 💕`,
+          `${nick}님, 또 왔군요! 🌸\n매일 와줘서 ${tName}이 너무 행복해요 💕`,
+        ],
+        short: [
+          `${nick}님, 와주셔서 너무 좋아요! 🌸\n오늘도 좋은 날 되어요!\n${tName}도 더욱 예쁘게 클게요 💕`,
+          `며칠 만이에요, ${nick}님! 🌸\n기다렸어요~ 정말로요!\n${tName}도 반가워하고 있어요 💕`,
+          `${nick}님, 왔어요! 🌸\n잠깐이라도 와줘서 기뻐요!\n${tName}이 활짝 피고 싶어졌어요 💕`,
+        ],
+        long: [
+          `${nick}님, 오랜만이에요! 🌸\n자주 와주세요!\n자주 와야 ${tName}이 쑥쑥 자라요 💕`,
+          `많이 기다렸어요, ${nick}님! 🌸\n${tName}도 보고 싶었나봐요.\n앞으로 자주 와줘요! 💕`,
+          `${nick}님, 오셨군요! 🌸\n${tName}은 항상 여기서 기다릴게요!\n자주 와줄 수 있죠? 💕`,
+        ],
+      },
+      orange: {
+        streak: [
+          `${nick}님!! 오늘도 또 왔어요?! 🍊⚡\n진짜 최고예요!\n올 때마다 ${tName}이 쑥쑥 자라고 있어요!!`,
+          `어제도 오고 오늘도 오고!! 🍊\n${nick}님 덕분에 ${tName}이 에너지 폭발이에요!! ⚡`,
+          `${nick}님, 연속이에요!! 🍊⚡\n${tName}이 너무 행복해서 더 빨리 자랄 것 같아요!!`,
+        ],
+        short: [
+          `${nick}님!! 와줬어요?! 🍊\n너무 좋아요!\n오늘도 좋은 날 만들어요!! ${tName}도 더 클게요! ⚡`,
+          `며칠 만이에요, ${nick}님!! 🍊\n기다리고 기다렸어요!\n${tName}도 엄청 반가워하고 있어요!! ⚡`,
+          `${nick}님 왔다!! 🍊⚡\n잠깐이라도 와줘서 진짜 기뻐요!\n${tName}이 갑자기 에너지가 생겼어요!!`,
+        ],
+        long: [
+          `${nick}님!! 오랜만이에요!! 🍊⚡\n자주 와주세요!\n자주 와야 ${tName}이 쑥쑥 자란다고요!!`,
+          `많이 기다렸어요, ${nick}님!! 🍊\n${tName}이 보고 싶어서 난리였어요!\n앞으로 자주 와줘요!! ⚡`,
+          `${nick}님 드디어 오셨어요!! 🍊⚡\n${tName}은 항상 여기 있을게요!\n자주자주 와줘요!!`,
+        ],
+      },
+    };
+
+    const pool = greetMsgs[type] || greetMsgs.pine;
+    let situation;
+    if (daysSinceLast <= 0) situation = null; // 오늘 첫 방문 (앱 최초 실행)
+    else if (daysSinceLast === 1) situation = 'streak';
+    else if (daysSinceLast <= 3) situation = 'short';
+    else situation = 'long';
+
+    if (situation) {
+      const msgs = pool[situation];
+      const greetMsg = msgs[Math.floor(Math.random() * msgs.length)];
+      setTimeout(() => {
+        showBubbleWithFade(greetMsg, 6000);
+      }, 1200); // 화면 로딩 후 1.2초 뒤 등장
+    }
+  }
+
   // ① 날씨를 먼저 받아온 뒤 → ② 화면 전체를 한 번에 그림 (깜빡임 방지)
   getLocation(() => {
     // 날씨 확정 후 배지 업데이트
@@ -5586,8 +7438,46 @@ function initMainGame() {
     hideLoadingOverlay();  // 날씨+렌더 완료 후 로딩 화면 제거
     setTimeout(showLetterBtn, 800); // 기념일 편지 버튼
     window.spawnWeatherCreature && window.spawnWeatherCreature(); // 날씨 생물 (5초 후)
+    tryAutoCapture(); // 🎞️ 기념일 자동 캡처
+
+    // ── 2일차 물 힌트: 나무 목마름 멘트 + 하늘 튜토리얼
+    (function tryRainTutorial() {
+      if (state.days !== 2) return;
+      if (localStorage.getItem('_rainHintShown')) return;
+      localStorage.setItem('_rainHintShown', '1');
+
+      const thirstMsg = {
+        pine:   `어제보다 조금 목말라요...\n하늘에서 비가 내려주면 좋겠는데. 🌧️`,
+        cherry: `목이 좀 마르네요...\n하늘에서 비가 내려줬으면 해요 🌧️`,
+        orange: `목말라요!! 🍊\n누가 하늘에서 비 내려주면 안 돼요?! 🌧️`
+      };
+      const msg = thirstMsg[state.treeType] || thirstMsg.pine;
+
+      // 나무 렌더 후 말풍선 표시 (약간 지연)
+      setTimeout(() => {
+        renderSpeechBubble(state.nickname, state.treeName, state.days, state.treeType, stage, msg);
+
+        // 말풍선 뜨고 2.5초 뒤 → 하늘 튜토리얼 힌트 표시
+        setTimeout(() => {
+          const hint = document.getElementById('rain-tutorial-hint');
+          if (!hint) return;
+          hint.classList.add('visible');
+
+          // 6초 후 페이드아웃
+          setTimeout(() => {
+            hint.classList.add('fade-out');
+            setTimeout(() => { hint.style.display = 'none'; }, 750);
+          }, 6000);
+        }, 2500);
+      }, 900);
+    })();
     setTimeout(() => {
       showNewTreeBtn();    // 61일+ 다른 나무 버튼
+
+      // inline style 제거 → CSS 기본값(left:55%) 적용
+      const treeStageEl = document.getElementById('tree-stage');
+      if (treeStageEl) treeStageEl.style.left = '';
+
       // 방문 나무: 오늘 날짜가 다르면(다음날 또는 재시작) 초기화
       const today = getLocalDateStr();
       if (window._visitingTree && window._visitingTree.sessionDate !== today) {
@@ -5597,7 +7487,7 @@ function initMainGame() {
         renderGrownTreesWithVisitor(); // 방문 나무 포함 렌더
         setTimeout(() => showVisitingBubble(window._visitingTree), 700);
       } else {
-        renderGrownTrees(); // 일반 졸업 나무 렌더
+        renderGrownTrees(); // 일반 졸업 나무 렌더 (위치 재확인)
       }
     }, 1200);
 
@@ -5607,6 +7497,9 @@ function initMainGame() {
       startGrassAnimation();
       updateKnockBtnPos();
     });
+
+    // idle 말풍선 감지 시작 (날씨/온도 확정 후 시작)
+    initIdleDetection();
   });
 }
 
@@ -5650,20 +7543,12 @@ function renderTree(stage) {
 }
 
 function updateTreeWindAnimation() {
-  // 풍속에 따라 sway 클래스 결정
-  // 0~5 m/s: gentle / 5~12: moderate / 12+: strong
-  let swayClass = 'sway-gentle';
-  if (windSpeed >= 12) swayClass = 'sway-strong';
-  else if (windSpeed >= 5) swayClass = 'sway-moderate';
-
-  // SVG 내 leaf-group 요소 모두에 적용
+  // leafSway 효과 비활성화 (treeSway만 사용)
   const svg = document.querySelector('#tree-stage svg');
   if (!svg) return;
-  svg.querySelectorAll('.leaf-group').forEach((el, i) => {
+  svg.querySelectorAll('.leaf-group').forEach(el => {
     el.classList.remove('sway-gentle', 'sway-moderate', 'sway-strong');
-    el.classList.add(swayClass);
-    // 각 그룹마다 약간 다른 딜레이로 자연스러운 파동 효과
-    el.style.animationDelay = (i * 0.18) + 's';
+    el.style.animationDelay = '';
   });
 }
 
@@ -5690,6 +7575,8 @@ window.addEventListener('load', () => {
     el.style.fontSize = (1.5 + Math.random())+'rem';
     deco.appendChild(el);
   });
+
+  // 위치 권한은 initMainGame -> getLocation 에서 요청함 (중복 제거)
 });
 
 /* ── 친밀도 ── */
@@ -5734,7 +7621,11 @@ function renderBond() {
   barsEl.innerHTML = "";
   for (let i = 0; i < 10; i++) {
     const bar = document.createElement("div");
-    bar.className = "bond-bar " + (i < filledCount ? "filled" : "empty");
+    if (i < filledCount) {
+      bar.className = "bond-bar filled tier-" + (i + 1);
+    } else {
+      bar.className = "bond-bar empty";
+    }
     bar.style.height = heights[i] + "px";
     barsEl.appendChild(bar);
   }
@@ -5765,5 +7656,388 @@ function renderBond() {
   labelEl.textContent = labels[idx];
 }
 </script>
+
+  <!-- 돌봄 완료 팝업 -->
+  <div id="care-popup-overlay">
+    <div class="care-popup-box">
+      <div class="care-popup-icon" id="care-popup-icon">💧</div>
+      <div class="care-popup-msg" id="care-popup-msg"></div>
+    </div>
+  </div>
 </body>
 </html>
+<!-- ============================================================
+     FINGER RAIN SYSTEM v2
+     ============================================================ -->
+<script>
+(function() {
+  const LONG_PRESS_MS  = 3000;
+  const DROP_RATE      = 5;
+  const WET_FADE_MS    = 2800;
+  const WET_DRY_MS     = 2200;
+  const CHARGE_RING_MS = 3000;
+
+  let drops       = [];
+  let wetSpots    = [];   // { x, y (ground-canvas 내부 좌표), r, maxR, alpha, born }
+  let treeWetSpots= [];   // { x, y (tree-stage 내부 좌표), r, alpha, born }
+  let pressTimer  = null;
+  let isRaining   = false;
+  let fingerX = 0, fingerY = 0;
+  let rafId   = null;
+  let chargeEl = null;
+
+  // ── 물주기 말풍선 멘트 (나무별 5가지, 성격 반영)
+  const WATER_SPEECH = {
+    pine: [
+      // 차분하고 묵직한 소나무 성격
+      `고마워요.\n시원하게 스며드네요. 🌿`,
+      `목이 좀 말랐어요.\n덕분에 살겠어요, 고마워요. 🌲`,
+      `물이 뿌리까지 닿는 게 느껴져요.\n감사해요. 🌿`,
+      `조용히 흡수하고 있어요.\n잘 자랄 수 있을 것 같아요. 🌲`,
+      `비처럼 시원하네요.\n오늘도 와줘서 고마워요. 🌿`
+    ],
+    cherry: [
+      // 다정하고 감성적인 벚나무 성격
+      `앗, 시원해요! 💧\n고마워요, 기다리고 있었어요 🌸`,
+      `목말랐는데 딱 맞게 와줬어요!\n너무 고마워요 🌸`,
+      `물이 꽃잎까지 스며드는 것 같아요.\n행복해요 💕`,
+      `이렇게 챙겨줘서 고마워요.\n더 예쁘게 피어날게요 🌷`,
+      `시원하고 상쾌해요! 💧\n오늘 하루도 힘낼 수 있어요 🌸`
+    ],
+    orange: [
+      // 활발하고 에너지 넘치는 오렌지나무 성격
+      `우와! 시원하다!! 💧🍊\n최고예요, 고마워요!!`,
+      `목말랐는데 감사합니다!! 🍊\n에너지 폭발할 것 같아요!`,
+      `물 받으니까 힘이 펄펄 넘쳐요!! ⚡\n오늘도 쑥쑥 자랄게요 🍊`,
+      `이 기분이야말로 살아있는 느낌!! 💧\n정말 고마워요 🍊⚡`,
+      `시원함 MAX!! 🍊💧\n이렇게 챙겨주는 사람이 최고예요!!`
+    ]
+  };
+
+  // 물주기 말풍선 트리거 (일정 물방울 누적 후 1회)
+  const WATER_SPEECH_THRESHOLD = 18; // 물방울 18개 닿으면 멘트
+  let treeDropHitCount  = 0;
+  let waterSpeechShown  = false;  // 한 번 누르는 동안 1회만
+  let lastWaterSpeechIdx = -1;    // 같은 멘트 연속 방지
+
+  // ── 캔버스 (물방울 낙하 전용 — z-index:6, 잔디 위)
+  function getDropCanvas() { return document.getElementById('finger-rain-canvas'); }
+  function resizeCanvas() {
+    const c = getDropCanvas();
+    if (c) { c.width = window.innerWidth; c.height = window.innerHeight; }
+  }
+
+  // ── ground-canvas 정보
+  function getGroundInfo() {
+    const gc  = document.getElementById('ground-canvas');
+    const app = document.getElementById('app');
+    if (!gc || !app) return { top: window.innerHeight * 0.68, gcH: 100 };
+    const r = gc.getBoundingClientRect();
+    return { top: r.top, gcH: gc.height || r.height, gc };
+  }
+
+  // 잔디 표면 Y (화면 절대좌표) — ground-canvas top + 잔디 baseY 비율 약 30%
+  function getGrassSurfaceY() {
+    const { top, gcH } = getGroundInfo();
+    return top + gcH * 0.30;
+  }
+
+  // ── tree 충돌: 하단 30% 영역만
+  function getTreeBaseRect() {
+    const ts = document.getElementById('tree-stage');
+    if (!ts) return null;
+    const r = ts.getBoundingClientRect();
+    const baseTop = r.top + r.height * 0.70; // 하단 30%
+    return { left: r.left, right: r.right, top: baseTop, bottom: r.bottom,
+             innerLeft: r.left, innerTop: r.top };
+  }
+
+  // ── 스팟 추가
+  let grassWetCount = 0;  // 잔디 물방울 누적 카운터
+  function addWetSpot(screenX, screenY) {
+    // ground-canvas 내부 좌표로 변환
+    const { top: gcTop, gc } = getGroundInfo();
+    const gcW = gc ? gc.width  : window.innerWidth;
+    const gcH = gc ? gc.height : 100;
+    const localX = screenX;
+    const localY = screenY - gcTop;   // gc 내부 Y
+    wetSpots.push({ x: localX, y: localY, r: 4, maxR: 22 + Math.random()*14,
+                    alpha: 0.6, born: performance.now() });
+    if (wetSpots.length > 50) wetSpots.shift();
+
+    // ── 물방울 8개마다 근처 풀날 끝에 꽃 피우기
+    grassWetCount++;
+    if (grassWetCount % 8 === 0) {
+      bloomGrassFlower(screenX);
+    }
+  }
+
+  function addTreeWetSpot(screenX, screenY) {
+    const ts = document.getElementById('tree-stage');
+    if (!ts) return;
+    const r = ts.getBoundingClientRect();
+    treeWetSpots.push({
+      x: screenX - r.left,
+      y: screenY - r.top,
+      r: 5 + Math.random() * 7,
+      alpha: 0.5, born: performance.now()
+    });
+    if (treeWetSpots.length > 30) treeWetSpots.shift();
+
+    // ── 물방울 누적 카운트 → 말풍선 트리거
+    treeDropHitCount++;
+    if (!waterSpeechShown && treeDropHitCount >= WATER_SPEECH_THRESHOLD) {
+      waterSpeechShown = true;
+      showWaterSpeech();
+    }
+  }
+
+  function showWaterSpeech() {
+    const treeType = (typeof state !== 'undefined' && state.treeType) || 'pine';
+    const msgs = WATER_SPEECH[treeType] || WATER_SPEECH.pine;
+
+    // 마지막에 보여준 인덱스 제외하고 랜덤 선택
+    let idx;
+    do { idx = Math.floor(Math.random() * msgs.length); }
+    while (msgs.length > 1 && idx === lastWaterSpeechIdx);
+    lastWaterSpeechIdx = idx;
+
+    const msg = msgs[idx];
+    setTimeout(() => { showBubbleWithFade(msg, 8000); }, 120);
+  }
+
+  // ── 충전 링
+  function showChargeRing(x, y) {
+    removeChargeRing();
+    const div = document.createElement('div');
+    div.id = 'finger-charge-ring';
+    div.style.cssText = `position:fixed;pointer-events:none;z-index:999;
+      width:52px;height:52px;left:${x-26}px;top:${y-26}px;border-radius:50%;`;
+    div.innerHTML = `<svg width="52" height="52" viewBox="0 0 52 52">
+      <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/>
+      <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(140,200,255,0.85)" stroke-width="3"
+        stroke-dasharray="138.2" stroke-dashoffset="138.2" stroke-linecap="round"
+        style="transform-origin:26px 26px;transform:rotate(-90deg)">
+        <animate attributeName="stroke-dashoffset" from="138.2" to="0"
+          dur="${CHARGE_RING_MS}ms" fill="forwards" calcMode="linear"/>
+      </circle>
+      <circle cx="26" cy="26" r="5" fill="rgba(180,220,255,0.5)">
+        <animate attributeName="r" values="4;7;4" dur="0.8s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.5;0.9;0.5" dur="0.8s" repeatCount="indefinite"/>
+      </circle></svg>`;
+    document.body.appendChild(div);
+    chargeEl = div;
+  }
+  function updateChargeRingPos(x, y) {
+    if (chargeEl) { chargeEl.style.left=(x-26)+'px'; chargeEl.style.top=(y-26)+'px'; }
+  }
+  function removeChargeRing() {
+    if (chargeEl) { chargeEl.remove(); chargeEl = null; }
+  }
+
+  // ── 메인 루프
+  function loop() {
+    // 1) 물방울 낙하 캔버스 (z-index:6 — 공중 물방울만)
+    const dc  = getDropCanvas();
+    if (!dc) return;
+    const dCtx = dc.getContext('2d');
+    dCtx.clearRect(0, 0, dc.width, dc.height);
+
+    const now        = performance.now();
+    const grassY     = getGrassSurfaceY();   // 화면 절대 Y
+    const treeBase   = getTreeBaseRect();
+
+    // 물방울 생성
+    if (isRaining) {
+      for (let i = 0; i < DROP_RATE; i++) {
+        const spread = 20;
+        drops.push({
+          x: fingerX + (Math.random()-0.5)*spread,
+          y: fingerY,
+          vy: 4 + Math.random()*5, vx: (Math.random()-0.5)*1.2,
+          r: 2.2 + Math.random()*2,
+          alpha: 0.75 + Math.random()*0.2,
+          stretch: 1.6 + Math.random()*1.4,
+        });
+      }
+    }
+
+    // 물방울 물리 + 그리기
+    const next = [];
+    for (const d of drops) {
+      d.x += d.vx; d.y += d.vy; d.vy += 0.45;
+
+      // 나무 기둥 하단 충돌 (잔디 충돌보다 먼저 체크)
+      if (treeBase &&
+          d.x >= treeBase.left && d.x <= treeBase.right &&
+          d.y >= treeBase.top  && d.y <= treeBase.bottom) {
+        addTreeWetSpot(d.x, d.y);
+        continue;
+      }
+      // 잔디 표면 충돌 — grassY에 닿은 물방울은 항상 잔디에 착지
+      if (d.y >= grassY) {
+        addWetSpot(d.x, grassY);
+        continue;
+      }
+      next.push(d);
+
+      // 그리기 (공중)
+      dCtx.save();
+      dCtx.globalAlpha = d.alpha;
+      dCtx.fillStyle = 'rgba(140,200,255,0.85)';
+      dCtx.beginPath();
+      dCtx.ellipse(d.x, d.y, d.r*0.55, d.r*d.stretch, 0, 0, Math.PI*2);
+      dCtx.fill();
+      dCtx.restore();
+    }
+    drops = next;
+
+    // 2) 바닥 젖음 → ground-canvas에 직접 그리기
+    const { gc } = getGroundInfo();
+    if (gc && wetSpots.length > 0) {
+      const gCtx = gc.getContext('2d');
+      // 잔디 애니메이션이 매 프레임 clearRect 하므로, 여기선 그냥 덧그리기만
+      for (const w of wetSpots) {
+        const age = now - w.born;
+        let alpha = w.alpha;
+        if (age > WET_FADE_MS) {
+          const t = Math.min(1, (age - WET_FADE_MS) / WET_DRY_MS);
+          alpha = w.alpha * (1 - t);
+        }
+        if (alpha <= 0.01) continue;
+        if (w.r < w.maxR) w.r = Math.min(w.maxR, w.r + 0.55);
+
+        gCtx.save();
+        gCtx.globalAlpha = alpha * 0.72;
+        const grd = gCtx.createRadialGradient(w.x, w.y, 0, w.x, w.y, w.r);
+        grd.addColorStop(0,   'rgba(80,160,240,0.7)');
+        grd.addColorStop(0.5, 'rgba(80,150,220,0.35)');
+        grd.addColorStop(1,   'rgba(60,130,200,0)');
+        gCtx.fillStyle = grd;
+        gCtx.beginPath();
+        gCtx.ellipse(w.x, w.y, w.r, w.r * 0.28, 0, 0, Math.PI*2);
+        gCtx.fill();
+        gCtx.restore();
+      }
+      wetSpots = wetSpots.filter(w => (now - w.born) < WET_FADE_MS + WET_DRY_MS + 400);
+    }
+
+    // 3) 나무 젖음 → tree-wet-canvas
+    renderTreeWet(now);
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  // ── 나무 젖음 캔버스
+  let twCanvas = null;
+  function ensureTreeWetCanvas() {
+    if (twCanvas && twCanvas.isConnected) return twCanvas;
+    const ts = document.getElementById('tree-stage');
+    if (!ts) return null;
+    const old = document.getElementById('tree-wet-canvas');
+    if (old) old.remove();
+    const c = document.createElement('canvas');
+    c.id = 'tree-wet-canvas';
+    c.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:2;';
+    ts.appendChild(c);
+    twCanvas = c;
+    return c;
+  }
+  function renderTreeWet(now) {
+    if (treeWetSpots.length === 0) return;
+    const ts = document.getElementById('tree-stage');
+    if (!ts) return;
+    const c = ensureTreeWetCanvas();
+    if (!c) return;
+    const r = ts.getBoundingClientRect();
+    c.width  = r.width  || 220;
+    c.height = r.height || 200;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+
+    for (const w of treeWetSpots) {
+      const age = now - w.born;
+      let alpha = w.alpha;
+      if (age > WET_FADE_MS) {
+        const t = Math.min(1, (age - WET_FADE_MS) / WET_DRY_MS);
+        alpha = w.alpha * (1 - t);
+      }
+      if (alpha <= 0.01) continue;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const grd = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, w.r);
+      grd.addColorStop(0,   'rgba(100,170,255,0.75)');
+      grd.addColorStop(0.6, 'rgba(80,150,240,0.35)');
+      grd.addColorStop(1,   'rgba(60,130,220,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, w.r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    treeWetSpots = treeWetSpots.filter(w => (now - w.born) < WET_FADE_MS + WET_DRY_MS + 400);
+  }
+
+  // ── 이벤트
+  function getTouchPos(e) {
+    return e.touches && e.touches.length > 0
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      : { x: e.clientX, y: e.clientY };
+  }
+  function isSkyArea(y) { return y < getGrassSurfaceY() - 10; }
+
+  function onPressStart(e) {
+    if (e.target.closest('button,.bottom-card,#modal-overlay,.speech-bubble')) return;
+    const { x, y } = getTouchPos(e);
+    if (!isSkyArea(y)) return;
+    fingerX = x; fingerY = y;
+    showChargeRing(x, y);
+    pressTimer = setTimeout(() => {
+      isRaining = true;
+      removeChargeRing();
+      if (!rafId) loop();
+    }, LONG_PRESS_MS);
+  }
+  function onPressMove(e) {
+    if (!pressTimer && !isRaining) return;
+    const { x, y } = getTouchPos(e);
+    fingerX = x; fingerY = y;
+    updateChargeRingPos(x, y);
+  }
+  function onPressEnd() {
+    clearTimeout(pressTimer); pressTimer = null;
+    isRaining = false;
+    removeChargeRing();
+    // 카운터 리셋 — 다음 물주기에서 다시 트리거 가능
+    treeDropHitCount = 0;
+    waterSpeechShown = false;
+    setTimeout(() => {
+      if (!isRaining && rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    }, WET_FADE_MS + WET_DRY_MS + 600);
+  }
+
+  // ── 초기화
+  function init() {
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    const page4 = document.getElementById('page4');
+    if (!page4) return;
+    page4.addEventListener('touchstart',  onPressStart, { passive:true });
+    page4.addEventListener('touchmove',   onPressMove,  { passive:true });
+    page4.addEventListener('touchend',    onPressEnd);
+    page4.addEventListener('touchcancel', onPressEnd);
+    page4.addEventListener('mousedown',   onPressStart);
+    page4.addEventListener('mousemove',   onPressMove);
+    page4.addEventListener('mouseup',     onPressEnd);
+  }
+
+  const _orig = window.initMainGame;
+  window.initMainGame = function(...args) {
+    const r = _orig ? _orig(...args) : undefined;
+    setTimeout(init, 500);
+    return r;
+  };
+  if (document.getElementById('page4')?.classList.contains('active')) init();
+
+})();
+</script>
